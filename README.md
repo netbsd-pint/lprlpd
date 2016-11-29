@@ -1,2 +1,3 @@
 *This awesome README.md will need to be updated*
-change
+
+I made this readme more understandable
