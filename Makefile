@@ -1,2 +1,2 @@
 CC=clang
-CFLAGS=-g -wall
+CFLAGS=-g -Weverything
