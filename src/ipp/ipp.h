@@ -1,6 +1,7 @@
 #ifndef IPP_H
 #define IPP_H
 
+#include <stdint.h>
 
 /* IPP Operation types */
 enum ipp_op {
@@ -107,5 +108,22 @@ enum ipp_stat {
 #define IPP_STATUS_REDIRECT(x) ((x) >= 0x0300 && (x) <= 0x03ff)
 #define IPP_STATUS_CLI_ERR(x)  ((x) >= 0x0400 && (x) <= 0x04ff)
 #define IPP_STATUS_SRV_ERR(x)  ((x) >= 0x0500 && (x) <= 0x05ff)
+
+
+/* All these fields are required in IPP 1.1 */
+struct ipp_header {
+  /* 2 Bytes: Version 1.1 */
+  int8_t major; 
+  int8_t minor;
+
+  /* 2 Bytes: Operation or Status */
+  union {
+    int16_t operation;
+    int16_t status;
+  } u;
+
+  /* 4 Bytes: Request ID */
+  int32_t request_id;
+};
 
 #endif
