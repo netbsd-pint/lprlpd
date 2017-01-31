@@ -1,0 +1,3 @@
+This is a sample txt file!
+
+How is everyone doing today? I don't know why I asked; I don't care.
