@@ -2,9 +2,9 @@
 #define common_T
 
 #include <stdlib.h>
+#include "lpr_api.h"
 
-
-#define _PATH_PRINTCAP /etc/printcap
+#define _PATH_PRINTCAP "/etc/printcap"
 
 const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
 char* printcap_buffer;
@@ -17,28 +17,22 @@ struct printer_st{
     char* remote_printer;
     char* spooling_dir;
     char* status_file;
-    int lpr;
+    int protocol;
 };
 
+struct function_st{
+    int (*connect) (const char*, const char*,const char*,const char*);
+    int (*print_file) (const int, const char*, const int);
+    int (*job_stats) (const int, const int);
+    int (*stop_job) (const int, const int);
+    int (*resume_job) (const int, const int);
+    int (*printer_status) (const int);
+};
 
-void getprintcap(struct printer_st *printer);
+struct function_st printingAPI[2];
 
-
-
-
-#endif
-
-// TODO move to another thing
-
-#ifndef api
-#define api
-// TODO check if port should be a char* or int
-int connect(const char *host, const char *port, const char* user, const char* password);
-int print_file(const int fd, const char* filepath, const int flags);
-int job_stats(const int fd, const int job_id);
-int stop_job(const int fd, const int job_if);
-int resume_job(const int fd, const int job_id);
-int printer_status(const int fd)
+//void getprintcap(struct printer_st *printer);
+void setupprotocol();
 
 
 
