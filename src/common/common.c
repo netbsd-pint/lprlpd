@@ -1,5 +1,26 @@
 #include "common.h"
 
+
+
+void setupprotocol(){
+    printingAPI[0].connect = connect_lpr;
+    printingAPI[0].print_file = print_file_lpr;
+    printingAPI[0].job_stats = job_stats_lpr;
+    printingAPI[0].stop_job = stop_job_lpr;
+    printingAPI[0].resume_job = resume_job_lpr;
+    printingAPI[0].printer_status = printer_status_lpr;
+
+    /*
+    printingAPI[1].connect = connect_ipp;
+    printingAPI[1].print_file = print_file_ipp;
+    printingAPI[1].job_stats = job_stats_ipp;
+    printingAPI[1].stop_job = stop_job_ipp;
+    printingAPI[1].resume_job = resume_job_ipp;
+    printingAPI[1].printer_status = printer_status_ipp;
+    */
+}
+
+/*
 void free_pr(struct printer_st *printer);
 
 
@@ -58,3 +79,4 @@ void free_pr(struct printer_st *printer){
     }
 
 }
+*/
