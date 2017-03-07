@@ -32,11 +32,12 @@ void getprintcap(struct printer_st *printer);
 
 #ifndef api
 #define api
+
 // TODO check if port should be a char* or int
 int connect(const char *host, const char *port, const char* user, const char* password);
 int print_file(const int fd, const char* filepath, const int flags);
 int job_stats(const int fd, const int job_id);
-int stop_job(const int fd, const int job_if);
+int stop_job(const int fd, const int job_id);
 int resume_job(const int fd, const int job_id);
 int printer_status(const int fd)
 
