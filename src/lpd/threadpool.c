@@ -69,6 +69,7 @@ void* worker_thread (void* dataPointer){
 
         FD = *self->data;
         // Get the printcap data and setup where you are going to write to.
+        // Set up function set
 
 
         fileID = getFileID();
@@ -97,6 +98,7 @@ void* worker_thread (void* dataPointer){
                 break;
             }
             printf("I read %d\n", justRead);
+            // Check if read needs to go into a loop.
             justRead = write(fileFD, &input, justRead);
             if(justRead<1){
               perror("write");
