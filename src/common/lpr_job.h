@@ -1,8 +1,8 @@
 /* Header file for lpr protocol and cli structures */
 
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef
 struct lpr_flags_st {
