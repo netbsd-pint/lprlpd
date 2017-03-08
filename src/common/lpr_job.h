@@ -1,4 +1,5 @@
 /* Header file for lpr protocol and cli structures */
+/* needs a job number field */
 
 #include <stdbool.h>
 #include <stdio.h>
