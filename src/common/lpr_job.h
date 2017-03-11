@@ -1,4 +1,5 @@
 /* Header file for lpr protocol and cli structures */
+/* needs a job number field */
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -37,3 +38,6 @@ struct lpr_flags_st {
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
   bool vflag;     /* The files are assumed to contain a raster image for devices like the Benson Varian. */
 } lpr_flags;
+
+lpr_flags * new_lpr_flags (char *username, char *hostname);
+void delete_lpr_flags (lpr_flags *j);

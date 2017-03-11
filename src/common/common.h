@@ -2,7 +2,9 @@
 #define common_T
 
 #include <stdlib.h>
+#include <sys/param.h>
 #include "lpr_api.h"
+#include <stdbool.h>
 
 #define _PATH_PRINTCAP "/etc/printcap"
 #define _PATH_DEFDEVLP "a"
@@ -11,9 +13,14 @@
 #define DEFLOCK "a"
 #define DEFSTAT "a"
 #define _PATH_CONSOLE "a"
+#define DEFMX 1000
+
 
 const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
 char* printcap_buffer;
+
+
+char	host[MAXHOSTNAMELEN+1];	/* host machine name */
 
 struct printer_st{
     char* local_printer;
@@ -23,6 +30,9 @@ struct printer_st{
     char* remote_printer;
     char* spooling_dir;
     char* status_file;
+    char* restr_group;
+    bool mult_copies;
+    long max_file_size;
     int protocol;
 };
 

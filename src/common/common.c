@@ -54,6 +54,14 @@ void getprintcap(struct printer_st *printer){
 	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
 	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
+
+
+  printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;    //printcap file(ASCII) is in /src/etc/printcap (in printcap file delete the following...)
+  if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0)
+    printer->max_file_size = DEFMX;
+  printer->mult_copies = (cgetcap(printcap_buffer, "sc", ':') != NULL);
+
+
     // TODO add in check remote
 //	if ((dp = checkremote()) != NULL)
 //		printf("Warning: %s\n", dp);
@@ -85,4 +93,10 @@ void free_pr(struct printer_st *printer){
         free(printer->remote_printer);
     }
 
+}
+
+const char * gethost(const char *hname)
+{
+	const char *p = strchr(hname, '@');
+	return p ? ++p : hname;
 }
