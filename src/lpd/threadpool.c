@@ -30,7 +30,7 @@ int thread_pool_init(){
     threads->size = STARTING_THREAD_NUM;
     threads->current = 0;
 
-    threads->data= malloc(sizeof(struct st_thread) * STARTING_THREAD_NUM);
+    threads->data = malloc(sizeof(struct st_thread) * STARTING_THREAD_NUM);
 
 
 
@@ -192,6 +192,8 @@ void add_thread(){
 
     threads->data[current].data = malloc(sizeof(int));
     threads->data[current].working = malloc(sizeof(int));
+
+    threads->data[current].printer = malloc(sizeof(struct printer_st));
 
     threads->current++;
     // Waiting for the thread to be done.

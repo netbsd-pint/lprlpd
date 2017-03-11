@@ -20,6 +20,7 @@ struct v_thread{
 struct st_thread{
     pthread_t *thread;
     pthread_mutex_t *lock;
+    struct printer_st *printer;
     int *data;
     int *working;
 };
