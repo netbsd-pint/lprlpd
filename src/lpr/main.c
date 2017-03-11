@@ -1,9 +1,16 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
+
 #include "../common/lpr_job.h"
+#include "../common/common.h"
+
+
+
+static int	 userid;	/* user id */
 
 static void
 usage(void)
@@ -130,7 +137,22 @@ int
 main (int argc, char **argv)
 {
   int status = 0;
+
+  setprogname(*argv);/*Therefore, in NetBSD, calling setprogname() 				    explicitly has no effect.
+                However, portable programs that wish to use 				    getprogname() should call
+                setprogname() from main().
+            On operating systems where getprogname() and
+                setprogname() are implemented
+            via a portability library, this call is
+                needed to make the name available.*/
+
+
+  gethostname(host, sizeof (host)); //host machine's name
+  userid = getuid();                //user's name
   lpr_flags *j = parse_commandline (argc, argv);
+
+  // so we should be calling this after setting flags...
+  //void getprintcap(struct printer_st *printer)
 
 
 
