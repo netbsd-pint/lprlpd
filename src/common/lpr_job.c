@@ -1,6 +1,6 @@
 /* File imeplements new/delete functions for the lpr_flags_st */
 
-#include "printing.h"
+#include "lpr_job.h"
 
 lpr_flags *
 new_lpr_flags (char *username, char *hostname)

@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "../common/lpr_job.h"
@@ -15,30 +16,41 @@ usage(void)
   exit(1);
 }
 
-/* Entry point of the lpr command line utility
-*/
-int
-main (int argc, char **argv)
+lpr_flags *
+parse_commandline (int argc, char **argv)
 {
-  int status = 0;
   lpr_flags *j = new_lpr_flags ("user1", "localhost");
   extern char *optarg;
   extern int optind;
-  int bflag, ch, fd;
+  int bflag, fd;
+  char ch[2] = {0};
 
-  while ((ch = getopt (argc, argv, "J:T:U:C:i:cdfghlmnopPqrRstv")) != -1) {
-    printf ("got: %s\n", optarg);
-
-    switch (ch) {
+  while ((ch[0] = getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghlmnopPqrRstv")) != -1) {
+    switch (ch[0]) {
+    case '#':
+      j->copies = atoi (optarg);
+      break;
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+      j->fontnum = atoi (ch);
+      j->font = optarg;
+      break;
     case 'J':
+      j->Jflag = optarg;
       break;
     case 'T':
+      j->Tflag = optarg;
       break;
     case 'U':
+      j->Uflag = optarg;
       break;
     case 'C':
+      j->Cflag = optarg;
       break;
     case 'i':
+      j->iflag = atoi (optarg);
       break;
       /* the rest of these flags are booleans */
     case 'c':
@@ -99,6 +111,28 @@ main (int argc, char **argv)
     } /* end switch */
 
   } /* end while */
+
+  /* The last argument(s) will be filename(s) */
+  // TODO: Make this a while loop that supports multiple files
+  // Also, reminder that the `protocolize` functio will iterate over files, copies
+  // making a separate packet for each copy of each file (copies * files) packets
+  if (optind <= argc) {
+    j->filename = (char *) malloc (strlen (argv[optind]));
+    strcpy (j->filename, argv[optind]);
+  }
+
+  return j;
+}
+
+/* Entry point of the lpr command line utility
+*/
+int
+main (int argc, char **argv)
+{
+  int status = 0;
+  lpr_flags *j = parse_commandline (argc, argv);
+
+
 
   return status;
 }
