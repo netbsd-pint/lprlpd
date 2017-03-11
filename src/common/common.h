@@ -5,6 +5,12 @@
 #include "lpr_api.h"
 
 #define _PATH_PRINTCAP "/etc/printcap"
+#define _PATH_DEFDEVLP "a"
+#define DEFLP "a"
+#define _PATH_DEFSPOOL "a"
+#define DEFLOCK "a"
+#define DEFSTAT "a"
+#define _PATH_CONSOLE "a"
 
 const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
 char* printcap_buffer;
