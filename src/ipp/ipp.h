@@ -1,6 +1,7 @@
-#ifndef IPP_H
-#define IPP_H
+#ifndef IPP_H_
+#define IPP_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /* IPP Operation types */
@@ -99,7 +100,7 @@ enum ipp_stat {
   IPP_STAT_SRV_ERR_NOT_ACCEPTING_JOBS  = 0x0506,
   IPP_STAT_SRV_ERR_BUSY                = 0x0507,
   IPP_STAT_SRV_ERR_JOB_CANCELED        = 0x0508,
-  IPP_STAT_SRV_ERR_NO_MULTI_DOC        = 0x0509
+  IPP_STAT_SRV_ERR_NO_MULTI_DOC        = 0x0509,
 };
 
 /* Status Code Checks */
@@ -109,21 +110,32 @@ enum ipp_stat {
 #define IPP_STATUS_CLI_ERR(x)  ((x) >= 0x0400 && (x) <= 0x04ff)
 #define IPP_STATUS_SRV_ERR(x)  ((x) >= 0x0500 && (x) <= 0x05ff)
 
-
-/* All these fields are required in IPP 1.1 */
 struct ipp_header {
   /* 2 Bytes: Version 1.1 */
   int8_t major; 
   int8_t minor;
 
   /* 2 Bytes: Operation or Status */
-  union {
-    int16_t operation;
-    int16_t status;
-  } u;
+  int16_t op_stat;
 
   /* 4 Bytes: Request ID */
   int32_t request_id;
+
+
+  /* This field is not transmitted across the wire */
+  size_t tags_used;
+  size_t tags_size;
+
+  char *tags;
 };
 
-#endif
+int ipp_connect(const char *address, const char *port);
+
+struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id);
+void ipp_free_header(struct ipp_header *header);
+bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
+                        const char *tag_name, const char *tag_val);
+
+void ipp_getPrinterInfo(int fd);
+
+#endif /* !IPP_H_ */
