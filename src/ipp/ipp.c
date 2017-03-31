@@ -83,26 +83,37 @@ bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
                         const char *tag_name, const char *tag_val) {
 
   struct ipp_header *tmpHdr = 0;
-  size_t tag_name_len, tag_val_len;
+  size_t tag_name_len = 0;
+  size_t tag_val_len = 0;
+  size_t tag_size_needed = 0;
   size_t extra = 1; /* Always need at least 1 extra byte */
   int16_t tmp;
 
-  if (!header)
+  if (!header) {
     return false;
+  }
 
-  tag_name_len = strlen(tag_name);
-  tag_val_len = strlen(tag_val);
+  if (tag_name) {
+    tag_name_len = strlen(tag_name);
+  }
+
+  if (tag_val) {
+    tag_val_len = strlen(tag_val);
+  }
 
   if (tag_name_len > 0) {
     extra += 2;
   }
+  
   if (tag_val_len > 0) {
     extra += 2;
   }
 
-  if (header->tags_size - header->tags_used < (tag_name_len + tag_val_len + extra)) {
+  tag_size_needed = tag_name_len + tag_val_len + extra;
+
+  if (header->tags_size - header->tags_used < (tag_size_needed)) {
     /* Allocate space for the tag (and possible values) */
-    tmpHdr = (char *) realloc(header->tags, tag_name_len + tag_val_len + extra);
+    tmpHdr = (char *) realloc(header->tags, tag_size + tag_size_needed);
 
     if (!tmpHdr) {
       return false;
@@ -112,7 +123,7 @@ bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
       header->tags = tmpHdr;
     }
     
-    header->tags_size = 512;
+    header->tags_size += tag_size_needed;
   }
 
   *(header->tags + header->tags_used++) = (char) tag;
