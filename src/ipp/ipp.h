@@ -121,8 +121,7 @@ struct ipp_header {
   /* 4 Bytes: Request ID */
   int32_t request_id;
 
-
-  /* This field is not transmitted across the wire */
+  /* Fields below this line are not transmitted across the wire */
   size_t tags_used;
   size_t tags_size;
 
