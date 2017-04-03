@@ -79,15 +79,17 @@ void ipp_free_header(struct ipp_header *header) {
     free(header);
 }
 
-bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
+bool ipp_header_add_tag(struct ipp_header *header, const char tag,
                         const char *tag_name, const char *tag_val) {
 
-  struct ipp_header *tmpHdr = 0;
   size_t tag_name_len = 0;
   size_t tag_val_len = 0;
   size_t tag_size_needed = 0;
   size_t extra = 1; /* Always need at least 1 extra byte */
+  
   int16_t tmp;
+
+  char *tmp_tags = 0;
 
   if (!header) {
     return false;
@@ -113,14 +115,14 @@ bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
 
   if (header->tags_size - header->tags_used < (tag_size_needed)) {
     /* Allocate space for the tag (and possible values) */
-    tmpHdr = (char *) realloc(header->tags, tag_size + tag_size_needed);
+    tmp_tags = (char *) realloc(header->tags, header->tags_size + tag_size_needed);
 
-    if (!tmpHdr) {
+    if (!tmp_tags) {
       return false;
     }
-    else if (tmpHdr != header->tags) {
+    else if (tmp_tags != header->tags) {
       free(header->tags);
-      header->tags = tmpHdr;
+      header->tags = tmp_tags;
     }
     
     header->tags_size += tag_size_needed;
@@ -150,16 +152,109 @@ bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
 
 }
 
-void ipp_getPrinterInfo(int fd) {
+char* ipp_generate_http_request(const char *address, const char *port, const char * ipp_path,
+                                const struct ipp_header *header) {
+  char *http_request = 0;
+
+  char *pos = 0;
+
+  int used_chars = 0;
+  
+  size_t http_size = 0;
+  /* size_t full_length = 0; */
+  size_t FIXME = 512;
+
+  int16_t *tmp16;
+  int32_t *tmp32;
+
+  if (!address || !port || !ipp_path || !header) {
+    return 0;
+  }
+
+  /* TODO: Fix the FIXME size calculation here! */
+  /* Need more space for IPP header data + HTTP stuff */
+  http_size = strlen(address) + strlen(port) + strlen(ipp_path) + header->tags_used + FIXME;
+
+  http_request = (char *) malloc(http_size);
+
+  if (!http_request) {
+    return 0;
+  }
+
+  pos = http_request;
+
+  /* TODO: Make helper function for this */
+  /* %zu = 19 chars max */
+  /* 19 + strlen(address) + strlen(port) + strlen(ipp_path) + 1 for ':' +
+     All of HTTP header text including \r\n's*/
+  
+  used_chars = snprintf(pos, http_size, "POST %s HTTP/1.1\r\n", ipp_path);
+  pos += used_chars;
+  http_size -= (unsigned long) used_chars;
+
+  used_chars = snprintf(pos, http_size, "Host: %s:%s\r\n", address, port);
+  pos += used_chars;
+  http_size -= (unsigned long) used_chars;
+
+  used_chars = snprintf(pos, http_size, "Content-Type: application/ipp\r\n");
+  pos += used_chars;
+  http_size -= (unsigned long) used_chars;
+
+  used_chars = snprintf(pos, http_size, "Content-Length: %zu\r\n\r\n", header->tags_used);
+  pos += used_chars;
+  http_size -= (unsigned long) used_chars;
+
+  *pos++ = header->major;
+  *pos++ = header->minor;
+
+  tmp16 = (int16_t *) pos;
+  *tmp16 = (int16_t) htons(header->op_stat);
+  pos += sizeof(int16_t);
+
+  tmp32 = (int32_t *) pos;
+  *tmp32 = (int32_t) htonl(header->request_id);
+  pos += sizeof(int32_t);
+
+  memcpy(pos, header->tags, header->tags_used);
+
+  *(pos + header->tags_used) = 0;
+
+  return http_request;
+}
+
+void ipp_test_print(int fd) {
   printf("%d\n", fd);
-  char httpBuf[512] = {0};
+
+  char *http_request = 0;
   char tmpBuf[4096] = {0};
 
+  ssize_t rc = 0;
 
-  
-  
   struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_GET_PRINTER_ATTR, 1);
-  ipp_header_add_tag(ipp_header, IPP_TAG_END_ATTR, NULL, NULL);
 
+  if (!ipp_header)
+    return;
+
+  ipp_header_add_tag(ipp_header, (char)IPP_OP_PRINT_JOB, NULL, NULL);
   
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
+
+  http_request = ipp_generate_http_request("140.160.139.120", "631", "/ipp", ipp_header);
+
+  if (http_request) {
+    printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
+
+    rc = write(fd, http_request, strlen(http_request));
+    printf("Write RC: %zd\n", rc);
+
+    while (rc > 0) {
+      rc = read(fd, tmpBuf, sizeof(tmpBuf));
+      printf("Read (RC: %zd): %s\n", rc, tmpBuf);
+    }
+    
+    free(http_request);
+  }
+
+  ipp_free_header(ipp_header);
+
 }

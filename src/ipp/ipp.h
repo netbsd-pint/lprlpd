@@ -132,9 +132,10 @@ int ipp_connect(const char *address, const char *port);
 
 struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id);
 void ipp_free_header(struct ipp_header *header);
-bool ipp_header_add_tag(struct ipp_header *header, const enum ipp_tag tag,
+bool ipp_header_add_tag(struct ipp_header *header, const char tag,
                         const char *tag_name, const char *tag_val);
-
-void ipp_getPrinterInfo(int fd);
+char* ipp_generate_http_request(const char *address, const char *port, const char * ipp_path,
+                                const struct ipp_header *header);
+void ipp_test_print(int fd);
 
 #endif /* !IPP_H_ */
