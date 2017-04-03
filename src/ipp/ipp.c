@@ -1,5 +1,6 @@
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include "ipp.h"
 
@@ -121,7 +123,6 @@ bool ipp_header_add_tag(struct ipp_header *header, const char tag,
       return false;
     }
     else if (tmp_tags != header->tags) {
-      free(header->tags);
       header->tags = tmp_tags;
     }
     
@@ -152,17 +153,14 @@ bool ipp_header_add_tag(struct ipp_header *header, const char tag,
 
 }
 
-char* ipp_generate_http_request(const char *address, const char *port, const char * ipp_path,
-                                const struct ipp_header *header) {
+char* ipp_mk_http_request(const char *address, const char *port, const char * ipp_path,
+                          const struct ipp_header *header, const size_t file_len, size_t *http_req_len) {
   char *http_request = 0;
-
   char *pos = 0;
 
   int used_chars = 0;
   
   size_t http_size = 0;
-  /* size_t full_length = 0; */
-  size_t FIXME = 512;
 
   int16_t *tmp16;
   int32_t *tmp32;
@@ -171,9 +169,10 @@ char* ipp_generate_http_request(const char *address, const char *port, const cha
     return 0;
   }
 
-  /* TODO: Fix the FIXME size calculation here! */
-  /* Need more space for IPP header data + HTTP stuff */
-  http_size = strlen(address) + strlen(port) + strlen(ipp_path) + header->tags_used + FIXME;
+  /* 104 = 19 (%zu max length) + 16 (POST...) + 9 (Host...) + 31
+     (Content-Type...) + 20 (Content-Length...) + 8 (IPP Header w/o
+     tags) + 1 (NULL) */
+  http_size = strlen(address) + strlen(port) + strlen(ipp_path) + header->tags_used + 104;
 
   http_request = (char *) malloc(http_size);
 
@@ -184,9 +183,6 @@ char* ipp_generate_http_request(const char *address, const char *port, const cha
   pos = http_request;
 
   /* TODO: Make helper function for this */
-  /* %zu = 19 chars max */
-  /* 19 + strlen(address) + strlen(port) + strlen(ipp_path) + 1 for ':' +
-     All of HTTP header text including \r\n's*/
   
   used_chars = snprintf(pos, http_size, "POST %s HTTP/1.1\r\n", ipp_path);
   pos += used_chars;
@@ -196,22 +192,27 @@ char* ipp_generate_http_request(const char *address, const char *port, const cha
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
 
+  
   used_chars = snprintf(pos, http_size, "Content-Type: application/ipp\r\n");
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
 
-  used_chars = snprintf(pos, http_size, "Content-Length: %zu\r\n\r\n", header->tags_used);
+  used_chars = snprintf(pos, http_size, "Content-Length: %zu\r\n\r\n", 8 + header->tags_used + file_len);
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
+
+  printf("HTTP Size remaining: %zu\n", http_size);
 
   *pos++ = header->major;
   *pos++ = header->minor;
 
-  tmp16 = (int16_t *) pos;
+  /* Silence the alignment warning */
+  tmp16 = (int16_t *) (void *) pos;
   *tmp16 = (int16_t) htons(header->op_stat);
   pos += sizeof(int16_t);
 
-  tmp32 = (int32_t *) pos;
+  /* Silence the alignment warning */
+  tmp32 = (int32_t *) (void *) pos;
   *tmp32 = (int32_t) htonl(header->request_id);
   pos += sizeof(int32_t);
 
@@ -219,37 +220,131 @@ char* ipp_generate_http_request(const char *address, const char *port, const cha
 
   *(pos + header->tags_used) = 0;
 
+  *http_req_len = (size_t)((pos + header->tags_used) - http_request);
+
   return http_request;
 }
 
-void ipp_test_print(int fd) {
-  printf("%d\n", fd);
-
+void ipp_test_print(int sockfd, const char *text_file) {
   char *http_request = 0;
-  char tmpBuf[4096] = {0};
+  size_t http_req_len = 0;
+  char tmp_buf[4096] = {0};
 
   ssize_t rc = 0;
 
-  struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_GET_PRINTER_ATTR, 1);
+  int filefd = open(text_file, O_RDONLY);
+  size_t file_len = 0;
+  struct stat file_stat;
+
+  if (!filefd)
+    return;
+
+  if (fstat(filefd, &file_stat) < 0) {
+    close(filefd);
+    return;
+  }
+
+  file_len = (size_t) file_stat.st_size;
+
+  struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_PRINT_JOB, (int32_t) random());
 
   if (!ipp_header)
     return;
 
-  ipp_header_add_tag(ipp_header, (char)IPP_OP_PRINT_JOB, NULL, NULL);
-  
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
+
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
+
+  /* TODO: This address:port/path shouldn't be hard coded */
+  snprintf(tmp_buf, sizeof(tmp_buf), "http://%s/%s", "140.160.139.120:631", "ipp");
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
+
+  /* TODO: Insert real username here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
+
+  /* TODO: Insert real job name here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
+
+  /* TODO: Insert actual mime-type here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
+
   ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
 
-  http_request = ipp_generate_http_request("140.160.139.120", "631", "/ipp", ipp_header);
+  http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, file_len, &http_req_len);
+
+  printf("HTTP REQ LEN: %zu\n", http_req_len);
 
   if (http_request) {
     printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
 
-    rc = write(fd, http_request, strlen(http_request));
-    printf("Write RC: %zd\n", rc);
+    rc = write(sockfd, http_request, http_req_len);
+    printf("Write (HTTP+IPP) RC: %zd\n", rc);
+
+    while ((rc = read(filefd, tmp_buf, sizeof(tmp_buf))) > 0) {
+      rc = write(sockfd, tmp_buf, (size_t)rc);
+      printf("Write (FILE) RC: %zd\n", rc);
+    }
+
+    rc = 1;
 
     while (rc > 0) {
-      rc = read(fd, tmpBuf, sizeof(tmpBuf));
-      printf("Read (RC: %zd): %s\n", rc, tmpBuf);
+      rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
+      printf("Read (RC: %zd): %s\n", rc, tmp_buf);
+    }
+    
+    free(http_request);
+  }
+
+  ipp_free_header(ipp_header);
+
+}
+
+void ipp_get_attributes(int sockfd) {
+  char *http_request = 0;
+  size_t http_req_len = 0;
+  char tmp_buf[4096] = {0};
+
+  ssize_t rc = 0;
+
+  struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_PRINT_JOB, (int32_t) random());
+
+  if (!ipp_header)
+    return;
+
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
+
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
+
+  /* TODO: This address:port/path shouldn't be hard coded */
+  snprintf(tmp_buf, sizeof(tmp_buf), "http://%s/%s", "140.160.139.120:631", "ipp");
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
+
+  /* TODO: Insert real username here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
+
+  /* TODO: Insert real job name here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
+
+  /* TODO: Insert actual mime-type here */
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
+
+  ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
+
+  http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, 0, &http_req_len);
+
+  printf("HTTP REQ LEN: %zu\n", http_req_len);
+
+  if (http_request) {
+    printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
+
+    rc = write(sockfd, http_request, http_req_len);
+    printf("Write (HTTP+IPP) RC: %zd\n", rc);
+
+    while (rc > 0) {
+      rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
+      printf("Read (RC: %zd): %s\n", rc, tmp_buf);
     }
     
     free(http_request);
