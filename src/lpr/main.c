@@ -151,6 +151,15 @@ main (int argc, char **argv)
   userid = getuid();                //user's name
   lpr_flags *j = parse_commandline (argc, argv);
 
+
+  getprintcap(struct printer_st *printer);
+
+  int rnum = random();
+
+  rnum = rnum %1000;
+
+
+
   // so we should be calling this after setting flags...
   //void getprintcap(struct printer_st *printer)
 
