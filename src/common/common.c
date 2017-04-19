@@ -45,17 +45,18 @@ void getprintcap(struct printer_st *printer){
 		printf("unknown printer: %s", printer->name);
 	else if (i == -3)
 		printf("potential reference loop detected in printcap file");
-        puts("here");
-    //free_pr(printer);
-    puts("here");
+  puts("here");
+  //free_pr(printer);
+  puts("here");
 
+  /* TODO: If printer name is not found, indicate a useful error instead of segfault */
 	printer->local_printer = cgetstr(printcap_buffer, DEFLP, &line) == -1 ? _PATH_DEFDEVLP : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFLP : line;
 	printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? _PATH_DEFSPOOL : line;
 	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
 	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
-    printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
+  printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
     //puts("here");
 
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;    //printcap file(ASCII) is in /src/etc/printcap (in printcap file delete the following...)

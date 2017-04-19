@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 
-#include "../common/lpr_job.h"
+#include "lpr_job.h"
 #include "../common/common.h"
 
 
@@ -151,11 +151,12 @@ main (int argc, char **argv)
   userid = getuid();                //user's name
   lpr_flags *j = parse_commandline (argc, argv);
 
-
-  getprintcap(struct printer_st *printer);
+  /* Printcap setup */
+  struct printer_st *printer = (struct printer_st*) malloc (sizeof (struct printer_st));
+  printer->name = "lp";
+  getprintcap(printer);
 
   int rnum = random();
-
   rnum = rnum %1000;
 
 

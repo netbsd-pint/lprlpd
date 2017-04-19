@@ -1,11 +1,12 @@
 #ifndef common
 #define common
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <sys/param.h>
+
 #include "lpr_api.h"
-#include <stdbool.h>
-#include "global.h"
+//#include "global.h"
 
 #define _PATH_PRINTCAP "/etc/printcap"
 #define _PATH_DEFDEVLP "a"
