@@ -29,7 +29,7 @@ char* printcap_buffer;
 void free_pr(struct printer_st *printer);
 
 
-void getprintcap(struct printer_st *printer){
+int getprintcap(struct printer_st *printer){
     const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
     char *line;
 	const char *dp;
@@ -39,12 +39,18 @@ void getprintcap(struct printer_st *printer){
     //puts("here");
 
         //TODO replace printf with fatal for logging
-	if ((i = cgetent(&printcap_buffer, printcapdb, printer->name)) == -2)
-		printf("can't open printer description file");
-	else if (i == -1)
-		printf("unknown printer: %s", printer->name);
-	else if (i == -3)
-		printf("potential reference loop detected in printcap file");
+	if ((i = cgetent(&printcap_buffer, printcapdb, printer->name)) == -2){
+		printf("can't open printer description file\n");
+        return -1;
+    }
+	else if (i == -1){
+		printf("unknown printer: %s\n", printer->name);
+        return -1;
+    }
+	else if (i == -3){
+		printf("potential reference loop detected in printcap file\n");
+        return -1;
+    }
   puts("here");
   //free_pr(printer);
   puts("here");
@@ -71,6 +77,7 @@ void getprintcap(struct printer_st *printer){
 //	printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
 
     // TODO add in the check for lpr/ipp
+    return 0;
 }
 
 void free_pr(struct printer_st *printer){
