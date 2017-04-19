@@ -48,7 +48,7 @@ struct function_st printingAPI[2];
 
 //void getprintcap(struct printer_st *printer);
 void setupprotocol();
-void getprintcap(struct printer_st *printer);
+int getprintcap(struct printer_st *printer);
 
 
 #endif
