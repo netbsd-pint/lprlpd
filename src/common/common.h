@@ -1,10 +1,11 @@
-#ifndef server_t
-#define common_T
+#ifndef common
+#define common
 
 #include <stdlib.h>
 #include <sys/param.h>
 #include "lpr_api.h"
 #include <stdbool.h>
+#include "global.h"
 
 #define _PATH_PRINTCAP "/etc/printcap"
 #define _PATH_DEFDEVLP "a"
@@ -16,11 +17,8 @@
 #define DEFMX 1000
 
 
-const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
-char* printcap_buffer;
 
-
-char	host[MAXHOSTNAMELEN+1];	/* host machine name */
+char host[MAXHOSTNAMELEN+1];	/* host machine name */
 
 struct printer_st{
     char* local_printer;
@@ -49,7 +47,7 @@ struct function_st printingAPI[2];
 
 //void getprintcap(struct printer_st *printer);
 void setupprotocol();
-
+void getprintcap(struct printer_st *printer);
 
 
 #endif

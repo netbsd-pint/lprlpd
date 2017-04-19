@@ -30,7 +30,7 @@ int thread_pool_init(){
     threads->size = STARTING_THREAD_NUM;
     threads->current = 0;
 
-    threads->data= malloc(sizeof(struct st_thread) * STARTING_THREAD_NUM);
+    threads->data = malloc(sizeof(struct st_thread) * STARTING_THREAD_NUM);
 
 
 
@@ -89,9 +89,11 @@ void* worker_thread (void* dataPointer){
         printf("File FD is %d\n", fileFD);
         printf("Thread %d is starting a job\n", threadnum);
         printf("Servicing socket %d\n", FD);
-        dprintf(*self->data,"Servicing you\n");
+        //dprintf(*self->data,"Servicing you\n");
 
         // Main read loop, I need to clean up if something goes wrong/
+
+
         while((justRead = read(FD, &input, 512)) != 0){
             if(justRead == 0){
                 printf("closing socket %d\n", FD);
@@ -105,6 +107,7 @@ void* worker_thread (void* dataPointer){
             }
             printf("I wrote %d\n", justRead);
         }
+
         // open a file
         // print to the file
 
@@ -192,6 +195,8 @@ void add_thread(){
 
     threads->data[current].data = malloc(sizeof(int));
     threads->data[current].working = malloc(sizeof(int));
+
+    threads->data[current].printer = malloc(sizeof(struct printer_st));
 
     threads->current++;
     // Waiting for the thread to be done.

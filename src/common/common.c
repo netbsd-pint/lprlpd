@@ -24,19 +24,19 @@ void setupprotocol(){
 // These defines need a real value and to be moved.
 
 
-
+char* printcap_buffer;
 
 void free_pr(struct printer_st *printer);
 
 
 void getprintcap(struct printer_st *printer){
-
+    const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
     char *line;
 	const char *dp;
 	int i;
 
     // clear any already malloc'd printer settings.
-
+    //puts("here");
 
         //TODO replace printf with fatal for logging
 	if ((i = cgetent(&printcap_buffer, printcapdb, printer->name)) == -2)
@@ -45,8 +45,9 @@ void getprintcap(struct printer_st *printer){
 		printf("unknown printer: %s", printer->name);
 	else if (i == -3)
 		printf("potential reference loop detected in printcap file");
-
-    free_pr(printer);
+        puts("here");
+    //free_pr(printer);
+    puts("here");
 
 	printer->local_printer = cgetstr(printcap_buffer, DEFLP, &line) == -1 ? _PATH_DEFDEVLP : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFLP : line;
@@ -54,7 +55,8 @@ void getprintcap(struct printer_st *printer){
 	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
 	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
-
+    printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
+    //puts("here");
 
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;    //printcap file(ASCII) is in /src/etc/printcap (in printcap file delete the following...)
   if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0)
