@@ -1,0 +1,84 @@
+#+STARTUP: showeverything
+
+* TODO IPP
+** TODO Decode requests/reponse
+*** TODO HTTP Header
+**** getline
+**** match_token
+*** TODO IPP Header
+
+** DONE Print-job
+   Should decode response
+** TODO Cancel-job
+   Dependent on decoding http/ipp
+** TODO Validate-Job
+   Dependent on decoding http/ipp
+** TODO Get-Jobs
+   Dependent on decoding http/ipp
+** TODO Get-Printer-Attributes
+   Dependent on decoding http/ipp
+** TODO Get-Job-Attributes
+   Dependent on decoding http/ipp
+** TODO Interfacing with the server
+   Dependent on decoding http/ipp
+** TODO Burst pages?
+   Would be easy if we add multiple document print jobs -- Currently impossible
+** TODO Syslog/Debug logging
+
+
+* TODO LPR
+** TODO Decode requests/response
+** TODO Rework connect/disconnect on client side for proper UID switches (port #'s)
+** TODO Get Queue status
+** TODO Interfacing with the server
+** TODO Syslog/Debug logging
+
+
+* TODO lpr
+** TODO Job structure to pass to protocols
+   Ben & Zach have a rough draft on paper
+** TODO Filter data before generating job structure
+** DONE Flag parsing
+** DONE Print cap parsing
+** TODO Call printing API to actually print
+** TODO Syslog/Debug logging
+
+
+* TODO lpd
+** DONE Thread pool
+** TODO Write a queue
+** TODO Rework connect/disconnect for port filtering
+** TODO Call printing API to actually print
+** TODO Syslog/Debug logging
+
+
+* TODO lprm
+** TODO Write the entire program
+** TODO Syslog/Debug logging
+
+
+* TODO lpq
+** TODO Write the entire program
+** TODO Syslog/Debug logging
+
+
+* TODO lpc
+** TODO Write the entire program
+** TODO Syslog/Debug logging
+
+
+* DONE lptest
+** Not going to rewrite this
+
+
+* TODO Documentation
+** TODO Man pages
+** TODO Usage messages in commands
+*** DONE lpr
+*** TODO lpd
+*** TODO lprm
+*** TODO lpq
+*** TODO lpc
+
+** Overall
+*** TODO Design shared API
