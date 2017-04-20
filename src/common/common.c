@@ -1,7 +1,8 @@
-#include "common.h"
-#include <string.h>
-#include <stdio.h>
 
+#include <stdio.h>
+#include <string.h>
+
+#include "common.h"
 
 void setupprotocol(){
     printingAPI[0].connect = connect_lpr;
@@ -9,7 +10,7 @@ void setupprotocol(){
     printingAPI[0].job_stats = job_stats_lpr;
     printingAPI[0].stop_job = stop_job_lpr;
     printingAPI[0].resume_job = resume_job_lpr;
-    printingAPI[0].printer_status = printer_status_lpr;
+    printingAPI[0].printeratus = printer_status_lpr;
 
     /*
     printingAPI[1].connect = connect_ipp;
@@ -17,7 +18,7 @@ void setupprotocol(){
     printingAPI[1].job_stats = job_stats_ipp;
     printingAPI[1].stop_job = stop_job_ipp;
     printingAPI[1].resume_job = resume_job_ipp;
-    printingAPI[1].printer_status = printer_status_ipp;
+    printingAPI[1].printeratus = printer_status_ipp;
     */
 }
 
@@ -26,10 +27,8 @@ void setupprotocol(){
 
 char* printcap_buffer;
 
-void free_pr(struct printer_st *printer);
-
-
-int getprintcap(struct printer_st *printer){
+int
+getprintcap (struct printer *printer) {
     const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
     char *line;
 	const char *dp;
@@ -56,8 +55,8 @@ int getprintcap(struct printer_st *printer){
   puts("here");
 
   /* TODO: If printer name is not found, indicate a useful error instead of segfault */
-	printer->local_printer = cgetstr(printcap_buffer, DEFLP, &line) == -1 ? _PATH_DEFDEVLP : line;
-	printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFLP : line;
+	printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? _PATH_DEFDEVLP : line;
+	printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFAULT_PRINTER : line;
 	printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? _PATH_DEFSPOOL : line;
 	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
 	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
@@ -80,11 +79,26 @@ int getprintcap(struct printer_st *printer){
     return 0;
 }
 
-void free_pr(struct printer_st *printer){
+struct printer *
+new_printer (char *printer_name)
+{
+  struct printer *p = (struct printer *) malloc (sizeof (struct printer));
+
+  if (p == NULL) {
+    printf ("Failed to malloc in new_printer.");
+    return NULL;
+  }
+
+  p->name = printer_name;
+  return p;
+}
+
+void
+free_printer (struct printer *printer) {
     if (strcmp(printer->local_printer, _PATH_DEFDEVLP) == 0){
         free(printer->local_printer);
     }
-    if (strcmp(printer->remote_printer, DEFLP) == 0){
+    if (strcmp(printer->remote_printer, DEFAULT_PRINTER) == 0){
         free(printer->remote_printer);
     }
     if (strcmp(printer->spooling_dir, _PATH_DEFSPOOL) == 0){
@@ -102,10 +116,10 @@ void free_pr(struct printer_st *printer){
     if (printer->remote_printer != NULL){
         free(printer->remote_printer);
     }
-
 }
 
-const char * gethost(const char *hname)
+const char *
+gethost(const char *hname)
 {
 	const char *p = strchr(hname, '@');
 	return p ? ++p : hname;

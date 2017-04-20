@@ -2,10 +2,10 @@
 
 #include "lpr_job.h"
 
-lpr_flags *
+struct lpr_flags *
 new_lpr_flags (char *username, char *hostname)
 {
-  lpr_flags *j = (lpr_flags*) malloc (sizeof (lpr_flags));
+  struct lpr_flags *j = (struct lpr_flags*) malloc (sizeof (struct lpr_flags));
   if (!j) {
     printf ("Failed to malloc in new_lpr_flags");
     exit (1);
@@ -46,7 +46,7 @@ new_lpr_flags (char *username, char *hostname)
 }
 
 void
-delete_lpr_flags (lpr_flags *j)
+delete_lpr_flags (struct lpr_flags *j)
 {
   free (j->username);
   free (j->hostname);
