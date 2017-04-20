@@ -121,14 +121,28 @@ main (int argc, char **argv)
   gethostname(host, 256);
   flags = parse_commandline (argc, argv);
 
-  printername = getenv ("PRINTER");
-  if (!printername) {
-    printername = DEFAULT_PRINTER;
+  /* try to get a printer or die trying */
+  if (flags->Iflag) { /* Fall back to LP */
+    printername = getenv ("PRINTER");
+    if (!printername) {
+      printf ("No printer set in PRINTER environment variable.\n");
+      exit (1);
+    }
+  } else { /* Use IPP */
+    printername = getenv ("IPP_PRINTER");
+    if (!printername) {
+      printername = getenv ("PRINTER");
+      if (!printername) {
+        printf ("No printer set in IPP_PRINTER or PRINTER environment variables.\n");
+        exit (1);
+      }
+    }
   }
-  printf ("'%s'\n", printername);
+
   printcap = new_printer (printername);
 
   if (!flags || !printcap) {
+    printf ("Error becaus things were not malloc'ed in main\n");
     exit (1);
   }
 
