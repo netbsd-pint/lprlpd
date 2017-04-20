@@ -24,7 +24,7 @@ struct lpr_flags {
   bool fflag;     /* Use a filter which interprets the first character of each line as a standard FORTRAN carriages control character. */
   bool gflag;     /* The files are assumed to containt standard plot data as produced by the plot routines. */
   bool hflag;     /* Suppress the printing of the burst page. */
-  bool Iflag;     /* Indicates to use IPP instead of LPR as the protocol. */
+  bool Iflag;     /* Indicates to fall back to using LP which is to say, our lpr defaults to IPP! */
   bool lflag;     /* Use a filter which allows control characters to be printed and suppress page breaks. */
   bool mflag;     /* Send mail upon complettion. */
   bool nflag;     /* The file are assumed to contain data from ditroff (device independent troff). */
