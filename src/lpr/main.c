@@ -32,7 +32,7 @@ parse_commandline (int argc, char **argv)
     exit (1);
   }
 
-  while ((ch[0] = getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghlmnopPqrRstv")) != -1) {
+  while ((ch[0] = getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghIlmnopPqrRstv")) != -1) {
     switch (ch[0]) {
     case '#':
       j->copies = atoi (optarg);
