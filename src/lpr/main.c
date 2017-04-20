@@ -65,6 +65,7 @@ parse_commandline (int argc, char **argv)
     case 'f': j->fflag = true; break;
     case 'g': j->gflag = true; break;
     case 'h': j->hflag = true; break;
+    case 'I': j->Iflag = true; break;
     case 'l': j->lflag = true; break;
     case 'm': j->mflag = true; break;
     case 'n': j->nflag = true; break;
