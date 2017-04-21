@@ -58,7 +58,7 @@ struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id) {
   struct ipp_header *header = (struct ipp_header *) malloc(sizeof(struct ipp_header));
 
   if (header) {
-    /* Current only IPP 1.1 is supported */
+    /* Currently only IPP 1.1 is supported */
     header->major = 1;
     header->minor = 1;
 
