@@ -110,9 +110,9 @@ enum ipp_stat {
 #define IPP_STATUS_CLI_ERR(x)  ((x) >= 0x0400 && (x) <= 0x04ff)
 #define IPP_STATUS_SRV_ERR(x)  ((x) >= 0x0500 && (x) <= 0x05ff)
 
-struct ipp_header {
+struct ipp_wire_header {
   /* 2 Bytes: Version 1.1 */
-  int8_t major; 
+  int8_t major;
   int8_t minor;
 
   /* 2 Bytes: Operation or Status */
@@ -130,15 +130,15 @@ struct ipp_header {
 
 int ipp_connect(const char *address, const char *port);
 
-struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id);
-void ipp_free_header(struct ipp_header *header);
-bool ipp_header_add_tag(struct ipp_header *header, const char tag,
+struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id);
+void ipp_free_wire_header(struct ipp_wire_header *header);
+bool ipp_wire_header_add_tag(struct ipp_wire_header *header, const char tag,
                         const char *tag_name, const char *tag_val);
 char* ipp_mk_http_request(const char *address, const char *port,
-                          const char * ipp_path, const struct ipp_header *header,
+                          const char * ipp_path, const struct ipp_wire_header *header,
                           const size_t file_len, size_t *http_req_len);
-bool ipp_parse_headers(const char *headers, const size_t headers_len,
-                       struct ipp_header *ipp_msg, size_t *file_len);
+bool ipp_parse_headers(char *headers, const size_t headers_len,
+                       struct ipp_wire_header *ipp_msg, size_t *file_len);
 void ipp_test_print(int sockfd, const char *text_file);
 void ipp_get_attributes(int sockfd);
 
