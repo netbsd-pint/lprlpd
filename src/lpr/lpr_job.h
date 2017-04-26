@@ -5,8 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef
-struct lpr_flags_st {
+struct lpr_flags {
   char *Jflag;    /* Job name to print on the burst page. Normally the file's name is used. */
   char *Tflag;    /* Title name for pr(1), instead of file name. */
   char *Uflag;    /* user name to print on the burst page, also for accounting purposes. */
@@ -37,7 +36,7 @@ struct lpr_flags_st {
   bool sflag;     /* Use symlinks. Usually files are copied to the spool directory. */
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
   bool vflag;     /* The files are assumed to contain a raster image for devices like the Benson Varian. */
-} lpr_flags;
+};
 
-lpr_flags * new_lpr_flags (char *username, char *hostname);
-void delete_lpr_flags (lpr_flags *j);
+struct lpr_flags * new_lpr_flags (char *username, char *hostname);
+void delete_lpr_flags (struct lpr_flags *j);

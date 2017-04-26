@@ -10,7 +10,7 @@
 
 #define _PATH_PRINTCAP "/etc/printcap"
 #define _PATH_DEFDEVLP "a"
-#define DEFLP "a"
+#define DEFAULT_PRINTER "lp"
 #define _PATH_DEFSPOOL "a"
 #define DEFLOCK "a"
 #define DEFSTAT "a"
@@ -21,7 +21,7 @@
 
 char host[MAXHOSTNAMELEN+1];	/* host machine name */
 
-struct printer_st{
+struct printer {
     char* local_printer;
     char* lock_file;
     char* log_file;
@@ -35,20 +35,23 @@ struct printer_st{
     int protocol;
 };
 
-struct function_st{
+struct printer * new_printer ();
+void free_printer (struct printer *printer);
+
+struct function_st {
     int (*connect) (const char*, const char*,const char*,const char*);
     int (*print_file) (const int, const char*, const int);
     int (*job_stats) (const int, const int);
     int (*stop_job) (const int, const int);
     int (*resume_job) (const int, const int);
-    int (*printer_status) (const int);
+    int (*printeratus) (const int);
 };
 
 struct function_st printingAPI[2];
 
-//void getprintcap(struct printer_st *printer);
+//void getprintcap(struct printer *printer);
 void setupprotocol();
-int getprintcap(struct printer_st *printer);
+int getprintcap(struct printer *printer);
 
 
 #endif
