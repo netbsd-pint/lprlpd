@@ -30,10 +30,10 @@ int thread_pool_init(){
     threads->size = STARTING_THREAD_NUM;
     threads->current = 0;
 
-    threads->data = malloc(sizeof(struct st_thread) * STARTING_THREAD_NUM);
+    threads->data = malloc(sizeof(struct server_thread) * STARTING_THREAD_NUM);
 
 
-
+    -
     // This is grabbing memory for the thread pool.
 
     pthread_mutex_init(&pool_lock, NULL);
@@ -45,10 +45,14 @@ int thread_pool_init(){
 
     return 0;
 }
-
+// TODO: Replace this with actual logic.
+// Most of this code is just filler.
 void* worker_thread (void* dataPointer){
     int threadnum = getID();
     int FD;
+    struct server_thread* self = malloc(sizeof(struct server_thread));
+    self = memcpy(self, dataPointer, sizeof(struct server_thread));
+    //^important v not important
     char input[512];
     int justRead = 0;
     int total = 0;
@@ -56,73 +60,26 @@ void* worker_thread (void* dataPointer){
     int fileFD = 0;
     char fileName[FILENAME_MAXLENGTH];
     char newName[FILENAME_MAXLENGTH];
-    struct st_thread* self = malloc(sizeof(struct st_thread));
-    self = memcpy(self, dataPointer, sizeof(struct st_thread));
 
+    //TODO make the structures the thread needs for holding data.
+
+    //Syncing
     globalLock = 0;
 
+    //Everything above this is for setting up the thread.
     while(1){
-        //puts("here1");
-        //printf("%d\n", threadnum);
 
+        //Each thread waits until it is unlocked.
         pthread_mutex_lock(self->lock);
 
+        // Grabs the FD that was passed in.
         FD = *self->data;
+
         // Get the printcap data and setup where you are going to write to.
         // Set up function set
 
 
-        fileID = getFileID();
-
-        // I need find where to spool the file to.
-        memset(fileName,0,FILENAME_MAXLENGTH);
-        snprintf(&fileName[0],FILENAME_MAXLENGTH-1,"%d.N",fileID);
-        printf("The file name is '%s'\n",fileName);
-
-
-        fileFD = open(fileName,O_WRONLY|O_CREAT, 0777); // edit permisions
-
-        if(fileFD < 0){
-          perror("open");
-        }
-        //DEBUG STUFF
-        printf("File FD is %d\n", fileFD);
-        printf("Thread %d is starting a job\n", threadnum);
-        printf("Servicing socket %d\n", FD);
-        //dprintf(*self->data,"Servicing you\n");
-
-        // Main read loop, I need to clean up if something goes wrong/
-
-
-        while((justRead = read(FD, &input, 512)) != 0){
-            if(justRead == 0){
-                printf("closing socket %d\n", FD);
-                break;
-            }
-            printf("I read %d\n", justRead);
-            // Check if read needs to go into a loop.
-            justRead = write(fileFD, &input, justRead);
-            if(justRead<1){
-              perror("write");
-            }
-            printf("I wrote %d\n", justRead);
-        }
-
-        // open a file
-        // print to the file
-
-
-        puts("Closing the file");
-        close(fileFD);
-
-        memset(newName,0,FILENAME_MAXLENGTH);
-        snprintf(&newName[0],FILENAME_MAXLENGTH-1,"%d.D",fileID);
-        rename(fileName, newName);
-        // Right now I need to start writing out the job.
-
-        //function(dataPointer)
-        //cleanup()
-
+        //Closes port, and set self to no longer working.
         close(*self->data);
         // delete newName
 
@@ -179,8 +136,8 @@ void add_thread(){
 
     // Doubling the max number of threads
     if (threads->size == threads->current){
-        temp = malloc(sizeof(struct st_thread)*threads->size*2);
-        threads = memmove(temp, threads, sizeof(struct st_thread)*threads->size);
+        temp = malloc(sizeof(struct server_thread)*threads->size*2);
+        threads = memmove(temp, threads, sizeof(struct server_thread)*threads->size);
         threads->size = threads->size*2;
     }
     globalLock = 1;
@@ -196,7 +153,7 @@ void add_thread(){
     threads->data[current].data = malloc(sizeof(int));
     threads->data[current].working = malloc(sizeof(int));
 
-    threads->data[current].printer = malloc(sizeof(struct printer_st));
+    threads->data[current].printer = malloc(sizeof(struct printer));
 
     threads->current++;
     // Waiting for the thread to be done.

@@ -13,11 +13,11 @@ struct test_Struct{
   int a;
 };
 struct v_thread{
-  struct st_thread *data;
+  struct server_thread *data;
   int size;
   int current;
 };
-struct st_thread{
+struct server_thread{
     pthread_t *thread;
     pthread_mutex_t *lock;
     struct printer_st *printer;
