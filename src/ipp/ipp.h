@@ -31,7 +31,7 @@ enum ipp_tag {
   IPP_TAG_JOB_ATTR          = 0x02,
   IPP_TAG_END_ATTR          = 0x03,
   IPP_TAG_PRINT_ATTR        = 0x04,
-  IPP_TAG_USUPPORTED_ATTR   = 0x05,
+  IPP_TAG_UNSUPPORTED_ATTR  = 0x05,
 
   /* Out-out-band Value Tags */
   IPP_TAG_UNSUPPORTED       = 0x10,
