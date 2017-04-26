@@ -125,7 +125,7 @@ bool ipp_header_add_tag(struct ipp_header *header, const char tag,
     else if (tmp_tags != header->tags) {
       header->tags = tmp_tags;
     }
-    
+
     header->tags_size += tag_size_needed;
   }
 
@@ -225,6 +225,38 @@ char* ipp_mk_http_request(const char *address, const char *port, const char * ip
   return http_request;
 }
 
+bool ipp_parse_headers(const char *headers, const size_t headers_len, struct ipp_header *ipp_msg, size_t *file_len) {
+  char *end = 0;
+  char *ipp_start = 0;
+
+  (void)&headers_len;
+
+  end = strchr(headers, ' ');
+  *end = 0;
+
+  if (strncasecmp(headers, "HTTP/", 5)) {
+    return false;
+  }
+
+  
+
+  file_len = 0;
+  
+  /* Try to find the start of the IPP header */
+  ipp_start = strstr(headers, "\r\n\r\n");
+
+  if (!ipp_start)
+    ipp_start = strstr(headers, "\n\r\n\r");
+
+  /* Still failed? Not a valid HTTP request */
+  if (!ipp_start)
+    return false;
+
+  ipp_msg = 0;
+  
+  return true;
+}
+
 void ipp_test_print(int sockfd, const char *text_file) {
   char *http_request = 0;
   size_t http_req_len = 0;
@@ -271,6 +303,7 @@ void ipp_test_print(int sockfd, const char *text_file) {
 
   ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
 
+  /* TODO: This address:port/path shouldn't be hard coded */
   http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, file_len, &http_req_len);
 
   printf("HTTP REQ LEN: %zu\n", http_req_len);
@@ -286,12 +319,22 @@ void ipp_test_print(int sockfd, const char *text_file) {
       printf("Write (FILE) RC: %zd\n", rc);
     }
 
+    close(filefd);
+
+    filefd = open("response.bin", O_WRONLY);
+
     rc = 1;
 
     while (rc > 0) {
       rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
-      printf("Read (RC: %zd): %s\n", rc, tmp_buf);
+      if (rc > 0) {
+        write(filefd, tmp_buf, (size_t)rc);
+        tmp_buf[rc - 1] = 0;
+        printf("Read (RC: %zd): %s\n", rc, tmp_buf);
+      }
     }
+
+    close(filefd);
     
     free(http_request);
   }
@@ -301,55 +344,6 @@ void ipp_test_print(int sockfd, const char *text_file) {
 }
 
 void ipp_get_attributes(int sockfd) {
-  char *http_request = 0;
-  size_t http_req_len = 0;
-  char tmp_buf[4096] = {0};
-
-  ssize_t rc = 0;
-
-  struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_PRINT_JOB, (int32_t) random());
-
-  if (!ipp_header)
-    return;
-
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
-
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
-
-  /* TODO: This address:port/path shouldn't be hard coded */
-  snprintf(tmp_buf, sizeof(tmp_buf), "http://%s/%s", "140.160.139.120:631", "ipp");
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
-
-  /* TODO: Insert real username here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
-
-  /* TODO: Insert real job name here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
-
-  /* TODO: Insert actual mime-type here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
-
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
-
-  http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, 0, &http_req_len);
-
-  printf("HTTP REQ LEN: %zu\n", http_req_len);
-
-  if (http_request) {
-    printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
-
-    rc = write(sockfd, http_request, http_req_len);
-    printf("Write (HTTP+IPP) RC: %zd\n", rc);
-
-    while (rc > 0) {
-      rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
-      printf("Read (RC: %zd): %s\n", rc, tmp_buf);
-    }
-    
-    free(http_request);
-  }
-
-  ipp_free_header(ipp_header);
-
+  sockfd = 0;
+  /* TODO: Write me please */
 }

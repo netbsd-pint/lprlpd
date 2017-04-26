@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "lpr_job.h"
+#include "proto_lp.h"
 
 /*Daemon command codes*/
 #define CMD_PRINT		0x01
@@ -69,9 +70,12 @@ struct printcomm
 /*create a temporary control file */
 int build_ctlfile(lpr_flags* job)
 {
-	int tmpfile = mkstemp("/temp/lptemp.XXXXXX");
+	char tmpname[20] = "/tmp/lptemp.XXXXXX\0";
+	char numstr[4];
+	int tmpfile = mkstemp(tmpname);
 	if(0 > tmpfile)
 		return -1;
+	sprintf(numstr, "%03d", job->jobnum);
 	/*generating host name*/
 	write(tmpfile, CMD_HOSTNAME, 1);
 	write(tmpfile, job->hostname, strlen(job->hostname));
@@ -87,6 +91,19 @@ int build_ctlfile(lpr_flags* job)
 		write(tmpfile, job->username, strlen(job->username));
 		write(tmpfile, "\n", 1);
 	}
+	/*print as formatted plaintext*/
+	write(tmpfile, CMD_PLAINTEXT, 1);
+	write(tmpfile, "dfA", 3);
+	write(tmpfile, numstr, 3);
+	write(tmpfile, job->hostname, strlen(job->hostname));
+	write(tmpfile, "\n", 1);
+
+	/*remove data file when done*/
+	write(tmpfile, CMD_UNLINK, 1);
+	write(tmpfile, "dfA", 3);
+	write(tmpfile, numstr, 3);
+	write(tmpfile, job->filename, strlen(job->filename));
+	write(tmpfile, "\n", 1);
 
 	lseek(tmpfile, 0, SEEK_SET);
 	return tmpfile;
@@ -165,8 +182,8 @@ int send_job(int serv, char* queue, lpr_flags* job)
 		return -3;
 	}
 	ctlsize = filestat.st_size;
-	size = dsize > ctlsize ? dsize : ctlsize;
-	numstr = malloc(sizeof(char) * (1 + log10(size))); /*room for base-10*/
+	size = (dsize > ctlsize ? dsize : ctlsize);
+	numstr = malloc(sizeof(char) * (2 + log10(size))); /*room for base-10*/
 
 	retval = 0;
 	for(int i = 0; i < job->copies; ++i)
@@ -189,11 +206,17 @@ int send_job(int serv, char* queue, lpr_flags* job)
 		sprintf(numstr, "%03d", job->jobnum);
 		send(serv, numstr, 3, 0);
 		send(serv, job->hostname, strlen(job->hostname), 0);
-		send(serv, "\n", 1, 0);
+		send(serv, "\0\n", 2, 0);
+		if(1 != recv(serv, &ack, 1, 0) || ack != 0x00)
+		{
+			retval = -1; /*bad ack*/
+			break;
+		}
 		do {
 			size = read(dfile, buf, BUFSIZE);
 			send(serv, buf, size, 0);
 		} while (size > 0);
+		send(serv, "\0", 1, 0);
 		if(1 != recv(serv, &ack, 1, 0) || ack != 0x00)
 		{
 			retval = -1; /*bad ack*/
@@ -208,11 +231,17 @@ int send_job(int serv, char* queue, lpr_flags* job)
 		sprintf(numstr, "%03d", job->jobnum);
 		send(serv, numstr, 3, 0);
 		send(serv, job->hostname, strlen(job->hostname), 0);
-		send(serv, "\n", 1, 0);
+		send(serv, "\0\n", 2, 0);
+		if(1 != recv(serv, &ack, 1, 0) || ack != 0x00)
+		{
+			retval = -1; /*bad ack*/
+			break;
+		}
 		do {
 			size = read(ctlfile, buf, BUFSIZE);
 			send(serv, buf, size, 0);
 		} while (size > 0);
+		send(serv, "\0", 1, 0);
 		if(1 != recv(serv, &ack, 1, 0) || ack != 0x00)
 		{
 			retval = -1; /*bad ack*/
@@ -232,13 +261,14 @@ int connect_lpr(const char* address, unsigned short port, const char* username, 
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
 
+
  if(!inet_aton(address, &addr.sin_addr)) {
     fprintf(stderr, "Could not convert \"%s\" to an address\n", address);
     return -1;
   }
 
-
- int fd = socket(PF_INET, SOCK_STREAM, 0);
+ int portnum = 35;
+ int fd = rresvport_af(&portnum, AF_INET);
   if(fd == -1) {
     fprintf(stderr, "Call to socket failed because (%d) \"%s\"\n",
             errno, strerror(errno));
@@ -262,3 +292,5 @@ int print_file_lpr(const int fd, char* queuename, lpr_flags* job){
 		start_print(fd, queuename);
     return 0;
 }
+
+

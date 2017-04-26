@@ -1,0 +1,39 @@
+#+STARTUP: showeverything
+
+int handle_incoming(int sock);
+   
+int add_job(struct job* j);
+int rem_job(struct job* j);
+struct job * get_jobs();
+??? get_job(???);
+
+file name: null terminated array of file paths
+["test.txt", 0]
+
+mime-type: null terminated array
+["text/plain", 0]
+
+* TODO Outgoing
+** TODO Create-job
+
+   int create_job(struct job *j);
+   // No IPP
+   
+** TODO Start-job
+   // No IPP
+** TODO Print-job
+   IPP Only, equivalent is create and then start
+** TODO Cancel-job
+   
+   bool cancel_job(char *username, char *id);
+
+   id can be null if you want to delete all *user* jobs
+
+** TODO Validate-Job
+   IPP only
+** TODO Get-Jobs
+   IPP only - LPR spec is undefined
+** TODO Get-Printer-Attributes
+   IPP only
+** TODO Get-Job-Attributes
+   IPP only
