@@ -1,3 +1,4 @@
+/*protocol dummies for server check*/
 #include "lpr_api.h"
 
 int connect_lpr(const char *host, const char *port, const char* user, const char* password){
