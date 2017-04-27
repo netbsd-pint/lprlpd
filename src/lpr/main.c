@@ -94,7 +94,7 @@ parse_commandline (int argc, char **argv)
   // TODO: Make this a while loop that supports multiple files
   // Also, reminder that the `protocolize` function will iterate over files, copies
   // making a separate packet for each copy of each file (copies * files) packets
-  if (optind <= argc) {
+  if (optind < argc) {
         j->filename = (char *) malloc (strlen (argv[optind]));
     strcpy (j->filename, argv[optind]);
   }
