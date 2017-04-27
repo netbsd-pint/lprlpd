@@ -31,6 +31,8 @@ getprintcap (struct printer *printer) {
   char *line;
   char *printcap_buffer;
 
+  //printf("%s","hey");
+
   /* clear any already malloc'd printer settings. */
   if ((i = cgetent(&printcap_buffer, printcapdb, printer->name)) == -2){
     printf("can't open printer description file\n");
@@ -85,25 +87,25 @@ new_printer (char *printer_name)
   return p;
 }
 
-void
+void //maybe free printer_name (memory leak?)
 free_printer (struct printer *printer)
 {
-  if (strcmp(printer->local_printer, PATH_DEFDEVLP) == 0){
+  if (printer->local_printer && (strcmp(printer->local_printer, PATH_DEFDEVLP) == 0)){
     free(printer->local_printer);
   }
-  if (strcmp(printer->remote_printer, DEFAULT_PRINTER) == 0){
+  if (printer->remote_printer && (strcmp(printer->remote_printer, DEFAULT_PRINTER) == 0)){
     free(printer->remote_printer);
   }
-  if (strcmp(printer->spooling_dir, PATH_DEFSPOOL) == 0){
+  if (printer->spooling_dir && (strcmp(printer->spooling_dir, PATH_DEFSPOOL) == 0)){
     free(printer->spooling_dir);
   }
-  if (strcmp(printer->lock_file, DEFLOCK) == 0){
+  if (printer->lock_file && (strcmp(printer->lock_file, DEFLOCK) == 0)){
     free(printer->lock_file);
   }
-  if (strcmp(printer->status_file, DEFSTAT) == 0){
+  if (printer->status_file && (strcmp(printer->status_file, DEFSTAT) == 0)){
     free(printer->status_file);
   }
-  if (strcmp(printer->log_file, PATH_CONSOLE) == 0){
+  if (printer->log_file && (strcmp(printer->log_file, PATH_CONSOLE) == 0)){
     free(printer->log_file);
   }
   if (printer->remote_printer != NULL){
