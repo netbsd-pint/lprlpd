@@ -132,7 +132,7 @@ main (int argc, char **argv)
     printf ("No printer set in PRINTER environment variable... Defaulting to 'lp'.\n");
   }
 
-  printcap = new_printer (printer_name);
+  printcap = new_printer (printername);
 
   /* Attempt to load printer configuration data from printcap */
   printer_status = getprintcap (printcap);
