@@ -35,7 +35,6 @@ struct lpr_flags {
   bool Rflag;     /* Writes a message to stdout containing the unique number which is used to identify this job. */
   bool sflag;     /* Use symlinks. Usually files are copied to the spool directory. */
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
-  bool vflag;     /* The files are assumed to contain a raster image for devices like the Benson Varian. */
 };
 
 struct lpr_flags * new_lpr_flags (char *username, char *hostname);

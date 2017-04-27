@@ -24,7 +24,6 @@ new_lpr_flags (char *username, char *hostname)
   j->oflag = false;
   j->pflag = false;
   j->tflag = false;
-  j->vflag = false;
   j->hflag = false;
   j->mflag = false;
   j->Pflag = false;

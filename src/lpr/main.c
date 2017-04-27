@@ -11,6 +11,7 @@
 
 static int usage (void);
 struct lpr_flags * parse_commandline (int argc, char **argv);
+void print_lpr_flags (struct lpr_flags *f);
 
 static int
 usage(void)
@@ -47,6 +48,7 @@ parse_commandline (int argc, char **argv)
     case '4':
       j->fontnum = atoi (ch);
       j->font = optarg;
+
       break;
     case 'J':
       j->Jflag = optarg;
@@ -80,7 +82,6 @@ parse_commandline (int argc, char **argv)
     case 'R': j->Rflag = true; break;
     case 's': j->sflag = true; break;
     case 't': j->tflag = true; break;
-    case 'v': j->vflag = true; break;
     case '?':
     default:
       usage ();
@@ -99,6 +100,14 @@ parse_commandline (int argc, char **argv)
   }
 
   return j;
+}
+
+/* test print of the fields of the flags */
+void
+print_lpr_flags (struct lpr_flags *f)
+{
+  printf ("Jflags: %s\nTflag: %s\nUflag: %s\nfont: %s\nCflag: %s\ncopies: %d\n",
+          f->Jflag, f->Tflag, f->Uflag, f->font, f->Cflag, f->copies);
 }
 
 /* Entry point of the lpr command line utility
@@ -124,6 +133,8 @@ main (int argc, char **argv)
   userid = (int) getuid ();
   gethostname (hostname, 256);
   flags = parse_commandline (argc, argv);
+
+  print_lpr_flags (flags);
 
   /* try to get a printer or die trying */
   printername = getenv ("PRINTER");
