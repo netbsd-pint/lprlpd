@@ -6,6 +6,7 @@
 #include <sys/param.h>
 
 #include "lpr_api.h"
+#include "print_job.h"
 
 #define _PATH_PRINTCAP "/etc/printcap"
 #define _PATH_DEFDEVLP "a"
@@ -31,13 +32,14 @@ struct printer {
 };
 
 struct print_ops {
-    int (*connect) (const char*, const char*,const char*,const char*);
-    int (*print_file) (const int, const char*, const int);
-    int (*job_stats) (const int, const int);
-    int (*stop_job) (const int, const int);
-    int (*resume_job) (const int, const int);
-    int (*printeratus) (const int);
+    int (*print_file) (const int, const struct job*);
+    struct job_stat* (*job_stats) (const int, const struct job*);
+    int (*stop_job) (const int, const struct job*);
+    int (*resume_job) (const int, const struct job*);
+    int (*printer_status) (const int, struct printer*);
 };
+
+extern struct print_ops printingAPI[2];
 
 struct printer * new_printer ();
 void free_printer (struct printer *printer);

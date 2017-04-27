@@ -1,14 +1,18 @@
+/*
+ */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-
 #include "lpr_job.h"
 #include "../common/common.h"
 
-static void
+static int usage (void);
+struct lpr_flags * parse_commandline (int argc, char **argv);
+
+static int
 usage(void)
 {
   fprintf(stderr,
@@ -16,7 +20,7 @@ usage(void)
           "[-U user]\n"
           "%s [-i[numcols]] [-1234 font] [-wnum] [-cdfghlmnopqRrstv] "
           "[name ...]\n", getprogname(), getprogname());
-  exit(1);
+  return 1;
 }
 
 struct lpr_flags *
@@ -25,14 +29,14 @@ parse_commandline (int argc, char **argv)
   struct lpr_flags *j = new_lpr_flags ("user1", "localhost");
   extern char *optarg;
   extern int optind;
-  int bflag, fd;
   char ch[2] = {0};
 
   if (!j) {
+    printf ("Failed to malloc in parse_commandline.\n");
     exit (1);
   }
 
-  while ((ch[0] = getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghIlmnopPqrRstv")) != -1) {
+  while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghlmnopPqrRstv")) != -1) {
     switch (ch[0]) {
     case '#':
       j->copies = atoi (optarg);
@@ -65,7 +69,6 @@ parse_commandline (int argc, char **argv)
     case 'f': j->fflag = true; break;
     case 'g': j->gflag = true; break;
     case 'h': j->hflag = true; break;
-    case 'I': j->Iflag = true; break;
     case 'l': j->lflag = true; break;
     case 'm': j->mflag = true; break;
     case 'n': j->nflag = true; break;
@@ -91,7 +94,7 @@ parse_commandline (int argc, char **argv)
   // Also, reminder that the `protocolize` function will iterate over files, copies
   // making a separate packet for each copy of each file (copies * files) packets
   if (optind <= argc) {
-    j->filename = (char *) malloc (strlen (argv[optind]));
+        j->filename = (char *) malloc (strlen (argv[optind]));
     strcpy (j->filename, argv[optind]);
   }
 
@@ -110,48 +113,35 @@ main (int argc, char **argv)
   struct lpr_flags *flags = NULL;
   struct printer *printcap = NULL;
 
-  /* Therefore, in NetBSD, calling setprogname() explicitly has no effect.
+  /*
+     Therefore, in NetBSD, calling setprogname() explicitly has no effect.
      However, portable programs that wish to use getprogname() should call
      setprogname() from main(). On operating systems where getprogname() and
      setprogname() are implemented via a portability library, this call is
      needed to make the name available.
   */
-  setprogname(*argv);
-  userid = getuid();
-  gethostname(host, 256);
+  setprogname (*argv);
+  userid = (int) getuid ();
+  gethostname (hostname, 256);
   flags = parse_commandline (argc, argv);
 
   /* try to get a printer or die trying */
-  if (flags->Iflag) { /* Fall back to LP */
-    printername = getenv ("PRINTER");
-    if (!printername) {
-      printf ("No printer set in PRINTER environment variable.\n");
-      exit (1);
-    }
-  } else { /* Use IPP */
-    printername = getenv ("IPP_PRINTER");
-    if (!printername) {
-      printername = getenv ("PRINTER");
-      if (!printername) {
-        printf ("No printer set in IPP_PRINTER or PRINTER environment variables.\n");
-        exit (1);
-      }
-    }
+  printername = getenv ("PRINTER");
+  if (!printername) {
+    printername = "lp";
+    printf ("No printer set in PRINTER environment variable... Defaulting to 'lp'.\n");
   }
 
   printcap = new_printer (printername);
 
-  if (!flags || !printcap) {
-    printf ("Error becaus things were not malloc'ed in main\n");
-    exit (1);
-  }
-
   /* Attempt to load printer configuration data from printcap */
   printer_status = getprintcap (printcap);
   if (printer_status < 0) {
-    printf ("Printer %s does not exists in printcap.\n", printcap->name);
     exit (1);
   }
+
+  /* TODO: Use the printcap and flags to build a job for the appropriate proto */
+
 
   return 0;
 }

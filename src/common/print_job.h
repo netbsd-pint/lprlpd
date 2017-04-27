@@ -27,4 +27,8 @@ struct job {
   bool burst_page;
 };
 
+struct job_stat{
+	char *status;
+};
+
 #endif
