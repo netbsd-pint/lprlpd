@@ -37,7 +37,6 @@ new_lpr_flags (char *username, char *hostname)
   j->font = NULL;
   j->Cflag = NULL;
   j->iflag = -1;
-  j->Iflag = false;
   j->Jflag = NULL;
   j->Tflag = NULL;
   j->Uflag = NULL;
