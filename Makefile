@@ -1,2 +1,6 @@
 CC=clang
-CFLAGS=-g -Weverything
+COPTS=-Weverything
+MKDEBUG=YES
+
+SUBDIR=src
+.include <bsd.subdir.mk>
