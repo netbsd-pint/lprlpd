@@ -1,14 +1,6 @@
-CC=clang
-CFlags= -g -Wall -pthread
+COPTS=-Weverything -pthread
+PROG=lpd
+SRCS=server.c threadpool.c
+MAN=
 
-DEPS = server.h threadpool.h
-FILE = server.c threadpool.c
-
-server: $(DEPS) $(FILE)
-	$(CC) $(CFlags) -o server $(FILE)
-	 
-check: server $(DEPS) $(FILE)
-	./server
-
-clean:
-	rm server
+.include <bsd.prog.mk>
