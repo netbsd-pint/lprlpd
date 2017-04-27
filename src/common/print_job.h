@@ -4,7 +4,7 @@
 #include "common.h"
 
 struct print_extra {
-  enum font font_type;
+  //enum font font_type;
   bool print_control_chars;
 };
 
@@ -21,13 +21,13 @@ struct job {
   struct printer* p;
 
   void *extra;
-  
+
   size_t copies;
 
   bool burst_page;
   bool no_start;
 
-  char pad[7];	/*offering to the clang gods*/
+  char pad[6];	/*offering to the clang gods*/
 };
 
 struct job_stat{
