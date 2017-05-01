@@ -3,7 +3,12 @@
 #include<string.h>
 #include<unistd.h>
 #include<fcntl.h>
-#include"threadpool.h"
+#include "threadpool.h"
+#include<pthread.h>
+
+void add_thread(void);                  
+int getFileID(void);
+
 
 static struct v_thread* threads;
 
@@ -12,13 +17,12 @@ static int ID = 0;
 static int fileID = 1;
 static pthread_mutex_t pool_lock;
 
-int wait = 0;
-int globalLock = 1;
+static int wait = 0;
+static int globalLock = 1;
 
-void add_thread();
-int getFileID();
 
-int thread_pool_init(){
+
+int thread_pool_init(void){
     int i;
     //int check;
     init = 1;
@@ -33,7 +37,6 @@ int thread_pool_init(){
     threads->data = malloc(sizeof(struct server_thread) * STARTING_THREAD_NUM);
 
 
-    -
     // This is grabbing memory for the thread pool.
 
     pthread_mutex_init(&pool_lock, NULL);
@@ -48,19 +51,12 @@ int thread_pool_init(){
 // TODO: Replace this with actual logic.
 // Most of this code is just filler.
 void* worker_thread (void* dataPointer){
-    int threadnum = getID();
+    //int threadnum = getID(); might need this later
     int FD;
     struct server_thread* self = malloc(sizeof(struct server_thread));
     self = memcpy(self, dataPointer, sizeof(struct server_thread));
     //^important v not important
-    char input[512];
-    int justRead = 0;
-    int total = 0;
-    int fileID = 0;
-    int fileFD = 0;
-    char fileName[FILENAME_MAXLENGTH];
-    char newName[FILENAME_MAXLENGTH];
-
+    
     //TODO make the structures the thread needs for holding data.
 
     //Syncing
@@ -78,10 +74,10 @@ void* worker_thread (void* dataPointer){
         // Get the printcap data and setup where you are going to write to.
         // Set up function set
 
+        // call bens monitor function.
 
         //Closes port, and set self to no longer working.
         close(*self->data);
-        // delete newName
 
 
         *self->working = 0;
@@ -90,7 +86,7 @@ void* worker_thread (void* dataPointer){
 }
 // This function is called by threads as they created.
 // It returns an ID for each thread to index into arrays.
-int getID(){
+int getID(void){
     int returnValue;
 
     returnValue = ID;
@@ -101,7 +97,7 @@ int getID(){
 }
 
 
-int getFileID(){
+int getFileID(void){
     int returnValue;
     pthread_mutex_lock(&pool_lock);
     returnValue = fileID;
@@ -129,13 +125,13 @@ int requestJob(int input){
   return -1;
 }
 
-void add_thread(){
+void add_thread(void){
     puts("Spooling up new thread.");
 
     struct v_thread *temp;
 
     // Doubling the max number of threads
-    if (threads->size == threads->current){
+    if ((int) threads->size == threads->current){
         temp = malloc(sizeof(struct server_thread)*threads->size*2);
         threads = memmove(temp, threads, sizeof(struct server_thread)*threads->size);
         threads->size = threads->size*2;

@@ -1,48 +1,44 @@
-#include "printqueue.h"
-
 #include <stdlib.h>
 #include <stdio.h>
-int main (){
-    struct queueManager queue;
-    queue.size = 0;
+#include <string.h>
+#include "printqueue.h"
+#include "../common/common.h"
+#include "../common/print_job.h"
+
+static struct queueVector queueList;
+
+struct queueManager* findQueue(char* queueName);
+
+// TODO add in mutexes for every function.
+
+
+
+
+// 0 is success, 1 is error.
+// TODO: add in a mutex for adding.
+// TODO: change input to just pointer to job struct.
+int addElement(struct job *input){
+
+    struct queueManager *queue = findQueue(input->p->name);
+
     struct queueElement *current = malloc(sizeof(struct queueElement));
-    current->name = "1";
-    addElement(&queue,current);
-    current = NULL;
-
-    current = malloc(sizeof(struct queueElement));
-    current->name = "2";
-    addElement(&queue,current);
-
-    current = malloc(sizeof(struct queueElement));
-    current->name = "3";
-    addElement(&queue,current);
-
-    queueEdit(&queue, 3);
-    current = pop(&queue);
-    puts(current->name);
-    current = pop(&queue);
-    puts(current->name);
-    current = pop(&queue);
-    puts(current->name);
-
-    return 0;
-}
-
-void addElement(struct queueManager *queue, struct queueElement *E){
+    current->data = input;
 
     if(queue->size == 0){
-        queue->head = E;
-        queue->tail = E;
+        queue->head = current;
+        queue->tail = current;
     }
+
     else{
-        E->previous = NULL;
-        queue->tail->previous = E;
-        queue->tail = E;
+        current->previous = NULL;
+        queue->tail->previous = current;
+        queue->tail = current;
     }
 
     queue->size++;
+    return 0;
 }
+
 
 struct queueElement* pop(struct queueManager *queue){
     struct queueElement *returnValue;
@@ -56,6 +52,7 @@ struct queueElement* pop(struct queueManager *queue){
     return returnValue;
 }
 
+// TODO: rewrite for however we want to do this, IE queuemanager-> string.
 void queueEdit(struct queueManager *queue,int index){
     if(index >= queue->size || index == 0){
         return;
@@ -72,3 +69,48 @@ void queueEdit(struct queueManager *queue,int index){
 
 
 }
+ // edit to take in the job struct for printer name.
+
+struct queueManager* findQueue(char* queueName){
+    //Looks through whatever I'm using to store
+    queueName = " ";
+    return NULL;
+}
+
+// This function will be called at the start of server.c running. It will
+// go through the printcap and find all of the spooling directorie.
+// use cgetfirst/cgetnext to find them. Set them up as a vector.
+// TODO rebuild the queue after a crash.
+void queueInit(void){
+    const char *printcapdb[2] = {"/etc/printcap", 0};
+	int i;
+    char* printcap_buffer;
+    queueList.size = 0;
+    queueList.queues = malloc(sizeof(struct queueManager)*2);
+    queueList.length = 2;
+
+    //i = cgetfirst(&printcap_buffer, printcapdb);
+
+    while((i =cgetnext(&printcap_buffer, printcapdb)) == 0){
+
+        if(queueList.size == queueList.length){
+            if(realloc(queueList.queues,(unsigned long) queueList.length*2*sizeof(struct queueManager)) == NULL){
+                //well shit
+                // TODO ERROR OUT HERE
+            }
+            queueList.length *= 2;
+        }
+        for(int j = 0; j < (int) strlen(printcap_buffer);j++){
+            // extract the name of the printer.
+            if(printcap_buffer[i] == ':'){
+                printcap_buffer[i] ='0';
+                queueList.queues[queueList.size].name = strdup(printcap_buffer);
+                printcap_buffer[i] = ':';
+                queueList.size++;
+                break;
+            }
+        }
+    }
+}
+
+//write the function that manages the queues.
