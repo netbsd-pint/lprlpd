@@ -22,51 +22,6 @@ void setupprotocol (void) {
   */
 }
 
-<<<<<<< HEAD
-// These defines need a real value and to be moved.
-
-
-
-
-int
-getprintcap (struct printer *printer) {
-    const char *printcapdb[2] = {_PATH_PRINTCAP, 0};
-    char *line;
-	const char *dp;
-	int i;
-    char* printcap_buffer;
-    // clear any already malloc'd printer settings.
-    //puts("here");
-
-        //TODO replace printf with fatal for logging
-	if ((i = cgetent(&printcap_buffer, printcapdb, printer->name)) == -2){
-		printf("can't open printer description file\n");
-        return -1;
-    }
-	else if (i == -1){
-		printf("unknown printer: %s\n", printer->name);
-        return -1;
-    }
-	else if (i == -3){
-		printf("potential reference loop detected in printcap file\n");
-        return -1;
-    }
-  puts("here");
-  //free_pr(printer);
-  puts("here");
-
-  /* TODO: If printer name is not found, indicate a useful error instead of segfault */
-	printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? _PATH_DEFDEVLP : line;
-	printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFAULT_PRINTER : line;
-	printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? _PATH_DEFSPOOL : line;
-	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
-	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
-	printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
-    printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
-    //puts("here");
-
-  printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;    //printcap file(ASCII) is in /src/etc/printcap (in printcap file delete the following...)
-=======
 
 int
 getprintcap (struct printer *printer) {
@@ -104,7 +59,6 @@ getprintcap (struct printer *printer) {
   printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? PATH_CONSOLE : line;
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;
   /* TODO add in the check for lpr/ipp */
->>>>>>> mainlpr/master
   if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0)
     printer->max_file_size = DEFMX;
   printer->mult_copies = (cgetcap(printcap_buffer, "sc", ':') != NULL);
