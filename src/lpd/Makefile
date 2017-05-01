@@ -1,6 +1,6 @@
 COPTS=-Weverything -pthread
 PROG=lpd
-SRCS=server.c threadpool.c
+SRCS=server.c threadpool.c printqueue.c
 MAN=
 
 .include <bsd.prog.mk>

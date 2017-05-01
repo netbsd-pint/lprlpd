@@ -16,11 +16,11 @@
 #include "threadpool.h"
 
 
-void sighandler(int num);
-int globalport = 0;
-int main(int argc, char **argv){
+void sighandler(int num) __attribute__ ((noreturn));
+static unsigned short globalport = 0;
+int main(){
 
-    int port = 25525;
+    unsigned short port = 25525;
     int max_half_connections = 10;
 
 
@@ -111,6 +111,7 @@ void serverLoop(int FD){
 }
 
 void sighandler(int num){
+  
   close(globalport);
-  _exit(0);
+  _exit(num);
 }
