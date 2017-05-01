@@ -25,6 +25,13 @@ struct job {
   size_t copies;
 
   bool burst_page;
+  bool no_start;
+
+  char pad[6];	/*offering to the clang gods*/
+};
+
+struct job_stat{
+	char *status;
 };
 
 #endif

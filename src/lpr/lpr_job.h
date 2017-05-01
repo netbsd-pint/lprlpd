@@ -24,7 +24,6 @@ struct lpr_flags {
   bool fflag;     /* Use a filter which interprets the first character of each line as a standard FORTRAN carriages control character. */
   bool gflag;     /* The files are assumed to containt standard plot data as produced by the plot routines. */
   bool hflag;     /* Suppress the printing of the burst page. */
-  bool Iflag;     /* Indicates to fall back to using LP which is to say, our lpr defaults to IPP! */
   bool lflag;     /* Use a filter which allows control characters to be printed and suppress page breaks. */
   bool mflag;     /* Send mail upon complettion. */
   bool nflag;     /* The file are assumed to contain data from ditroff (device independent troff). */
@@ -36,7 +35,6 @@ struct lpr_flags {
   bool Rflag;     /* Writes a message to stdout containing the unique number which is used to identify this job. */
   bool sflag;     /* Use symlinks. Usually files are copied to the spool directory. */
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
-  bool vflag;     /* The files are assumed to contain a raster image for devices like the Benson Varian. */
 };
 
 struct lpr_flags * new_lpr_flags (char *username, char *hostname);

@@ -12,6 +12,52 @@
 
 #include "ipp.h"
 
+#define ISNEWLINE(x) (x == '\n' || x == '\r')
+#define ISWS(x) (x == ' ' || x == '\t' || ISNEWLINE(x))
+
+static char * getline_buf(char *buf) {
+  if (!buf) {
+    return 0;
+  }
+
+  while (*buf && !ISNEWLINE(*buf)) {
+    ++buf;
+  }
+
+  /* Strip the \r\n or just the \n */
+  if (*buf && ISNEWLINE(*buf)) {
+    *buf++ = 0;
+    if (*buf && ISNEWLINE(*buf)) {
+      *buf++ = 0;
+    }
+  }
+
+  return buf;
+}
+
+static char * match_token(char *buf, char *token) {
+  size_t token_len = strlen(token);
+  size_t buf_len = strlen(buf);
+
+  if (buf_len < token_len)
+    return 0;
+
+  if (strncasecmp(buf, token, token_len))
+    return 0;
+
+  buf = buf + token_len;
+
+  if (!*buf || !ISWS(*buf)) {
+    return 0;
+  }
+
+  while (*buf && ISWS(*buf)) {
+    ++buf;
+  }
+
+  return buf;
+}
+
 int ipp_connect(const char *address, const char *port) {
   int fd = -1;
   int error;
@@ -35,7 +81,7 @@ int ipp_connect(const char *address, const char *port) {
       cause = "socket";
       continue;
     }
-    
+
     if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
       cause = "connect";
       close(fd);
@@ -54,11 +100,11 @@ int ipp_connect(const char *address, const char *port) {
   return fd;
 }
 
-struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id) {
-  struct ipp_header *header = (struct ipp_header *) malloc(sizeof(struct ipp_header));
+struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id) {
+  struct ipp_wire_header *header = (struct ipp_wire_header *) malloc(sizeof(struct ipp_wire_header));
 
   if (header) {
-    /* Current only IPP 1.1 is supported */
+    /* Currently only IPP 1.1 is supported */
     header->major = 1;
     header->minor = 1;
 
@@ -74,21 +120,21 @@ struct ipp_header *ipp_mk_header(int16_t op_stat, int32_t request_id) {
   return header;
 }
 
-void ipp_free_header(struct ipp_header *header) {
+void ipp_free_wire_header(struct ipp_wire_header *header) {
   if (header && header->tags)
     free(header->tags);
   if (header)
     free(header);
 }
 
-bool ipp_header_add_tag(struct ipp_header *header, const char tag,
+bool ipp_wire_header_add_tag(struct ipp_wire_header *header, const char tag,
                         const char *tag_name, const char *tag_val) {
 
   size_t tag_name_len = 0;
   size_t tag_val_len = 0;
   size_t tag_size_needed = 0;
   size_t extra = 1; /* Always need at least 1 extra byte */
-  
+
   int16_t tmp;
 
   char *tmp_tags = 0;
@@ -108,7 +154,7 @@ bool ipp_header_add_tag(struct ipp_header *header, const char tag,
   if (tag_name_len > 0) {
     extra += 2;
   }
-  
+
   if (tag_val_len > 0) {
     extra += 2;
   }
@@ -154,12 +200,12 @@ bool ipp_header_add_tag(struct ipp_header *header, const char tag,
 }
 
 char* ipp_mk_http_request(const char *address, const char *port, const char * ipp_path,
-                          const struct ipp_header *header, const size_t file_len, size_t *http_req_len) {
+                          const struct ipp_wire_header *header, const size_t file_len, size_t *http_req_len) {
   char *http_request = 0;
   char *pos = 0;
 
   int used_chars = 0;
-  
+
   size_t http_size = 0;
 
   int16_t *tmp16;
@@ -183,7 +229,7 @@ char* ipp_mk_http_request(const char *address, const char *port, const char * ip
   pos = http_request;
 
   /* TODO: Make helper function for this */
-  
+
   used_chars = snprintf(pos, http_size, "POST %s HTTP/1.1\r\n", ipp_path);
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
@@ -192,7 +238,7 @@ char* ipp_mk_http_request(const char *address, const char *port, const char * ip
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
 
-  
+
   used_chars = snprintf(pos, http_size, "Content-Type: application/ipp\r\n");
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
@@ -225,35 +271,46 @@ char* ipp_mk_http_request(const char *address, const char *port, const char * ip
   return http_request;
 }
 
-bool ipp_parse_headers(const char *headers, const size_t headers_len, struct ipp_header *ipp_msg, size_t *file_len) {
-  char *end = 0;
-  char *ipp_start = 0;
+bool ipp_parse_headers(char *headers, const size_t headers_len, struct ipp_wire_header *ipp_msg, size_t *file_len) {
+  char *start = headers;
+  char *next;
+  char *match;
+
+  unsigned long long content_length = 0;
 
   (void)&headers_len;
+  (void)&ipp_msg;
 
-  end = strchr(headers, ' ');
-  *end = 0;
-
+  /* Basic check for HTTP response */
   if (strncasecmp(headers, "HTTP/", 5)) {
     return false;
   }
 
-  
+  /* Check each line to get the results */
+  next = getline_buf(start);
 
-  file_len = 0;
-  
-  /* Try to find the start of the IPP header */
-  ipp_start = strstr(headers, "\r\n\r\n");
+  while (*start) {
+    printf("Line: %s\n", start);
 
-  if (!ipp_start)
-    ipp_start = strstr(headers, "\n\r\n\r");
+    if ((match = match_token(start, "Content-Length:"))) {
+      printf("Content-Length was %llu\n", strtoull(match, 0, 10));
+      content_length = strtoull(match, 0, 10);
+    }
+    else if ((match = match_token(start, "Content-Type:"))) {
+      printf("Content-Type was %s\n", match);
+      if (strncasecmp(match, "application/ipp", 15)) {
+        return false;
+      }
+    }
 
-  /* Still failed? Not a valid HTTP request */
-  if (!ipp_start)
-    return false;
+    start = next;
+    next = getline_buf(next);
+  }
 
-  ipp_msg = 0;
-  
+  /* next now points to the start of the IPP header */
+
+  *file_len = 0;
+
   return true;
 }
 
@@ -278,30 +335,30 @@ void ipp_test_print(int sockfd, const char *text_file) {
 
   file_len = (size_t) file_stat.st_size;
 
-  struct ipp_header *ipp_header = ipp_mk_header(IPP_OP_PRINT_JOB, (int32_t) random());
+  struct ipp_wire_header *ipp_header = ipp_mk_wire_header(IPP_OP_PRINT_JOB, (int32_t) random());
 
   if (!ipp_header)
     return;
 
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
 
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
 
   /* TODO: This address:port/path shouldn't be hard coded */
   snprintf(tmp_buf, sizeof(tmp_buf), "http://%s/%s", "140.160.139.120:631", "ipp");
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
 
   /* TODO: Insert real username here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
 
   /* TODO: Insert real job name here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
 
   /* TODO: Insert actual mime-type here */
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
 
-  ipp_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
 
   /* TODO: This address:port/path shouldn't be hard coded */
   http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, file_len, &http_req_len);
@@ -335,11 +392,11 @@ void ipp_test_print(int sockfd, const char *text_file) {
     }
 
     close(filefd);
-    
+
     free(http_request);
   }
 
-  ipp_free_header(ipp_header);
+  ipp_free_wire_header(ipp_header);
 
 }
 
