@@ -25,7 +25,7 @@ void setupprotocol(){
 // These defines need a real value and to be moved.
 
 
-char* printcap_buffer;
+
 
 int
 getprintcap (struct printer *printer) {
@@ -33,7 +33,7 @@ getprintcap (struct printer *printer) {
     char *line;
 	const char *dp;
 	int i;
-
+    char* printcap_buffer;
     // clear any already malloc'd printer settings.
     //puts("here");
 
@@ -61,7 +61,7 @@ getprintcap (struct printer *printer) {
 	printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
 	printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
 	printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
-  printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
+    printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
     //puts("here");
 
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;    //printcap file(ASCII) is in /src/etc/printcap (in printcap file delete the following...)
