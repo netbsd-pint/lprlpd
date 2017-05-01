@@ -1,8 +1,8 @@
-#include<pthread.h>
-#include"../common/common.h"
+#ifndef THREADPOOL_H
+#define THREADPOOL_H
 
-//#ifndef threadpool_h
-//#define threadpool_h
+#include <pthread.h>
+#include "common.h"
 
 #define MAX_THREAD_NUM 16
 #define STARTING_THREAD_NUM 4
@@ -34,8 +34,6 @@ struct server_thread{
     int *working;
 };
 
-
-
-//#endif
+#endif
 
 // I need to write a vector array for holding the data.

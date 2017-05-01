@@ -1,4 +1,5 @@
-COPTS=-Weverything -pthread
+COPTS=-Weverything
+LDFLAGS+=-lpthread
 PROG=lpd
 SRCS=server.c threadpool.c printqueue.c
 MAN=

@@ -1,8 +1,6 @@
 #ifndef PRINTQUEUE_H
 #define PRINTQUEUE_H
-#include "../common/print_job.h"
-
-
+#include "print_job.h"
 
 struct queueElement{
     struct job *data; // this is going to be a job struct
@@ -26,7 +24,6 @@ struct queueVector{
     int watched;
     char padding[4];
 };
-
 
 struct queueElement* pop(struct queueManager *queue);
 int addElement(struct job *input);

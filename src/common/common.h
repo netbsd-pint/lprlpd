@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <sys/param.h>
 
-#include "lpr_api.h"
+#include "printer.h"
 #include "print_job.h"
 
 #define PATH_PRINTCAP "/etc/printcap"
@@ -16,21 +16,6 @@
 #define DEFSTAT "a"
 #define PATH_CONSOLE "a"
 #define DEFMX 1000
-
-struct printer {
-  char* local_printer;
-  char* lock_file;
-  char* log_file;
-  char* name;
-  char* remote_printer;
-  char* spooling_dir;
-  char* status_file;
-  char* restr_group;
-  long max_file_size;
-  int protocol;
-  bool mult_copies;
-  char pad[3]; /* padding to appease the compiler clang! */
-};
 
 struct print_ops {
   struct job_stat* (*job_stats) (const int, const struct job*);
