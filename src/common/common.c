@@ -1,8 +1,9 @@
-
 #include <stdio.h>
 #include <string.h>
 
 #include "common.h"
+
+struct print_ops printingAPI[2];
 
 void setupprotocol (void) {
   /*

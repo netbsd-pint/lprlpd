@@ -1,7 +1,7 @@
 #ifndef PRINT_JOB_H
 #define PRINT_JOB_H
 
-#include "common.h"
+#include "printer.h"
 
 struct print_extra {
   //enum font font_type;
@@ -30,7 +30,7 @@ struct job {
   char pad[6];	/*offering to the clang gods*/
 };
 
-struct job_stat{
+struct job_stat {
 	char *status;
 };
 
