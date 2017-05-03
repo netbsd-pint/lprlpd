@@ -1,7 +1,7 @@
 #ifndef PRINTQUEUE_H
 #define PRINTQUEUE_H
 //change this back
-
+#include<pthread.h>
 #include "print_job.h"
 
 struct queueElement{
@@ -10,13 +10,13 @@ struct queueElement{
     //char padding[8];
 };
 
-struct queueManager{
-    int size;
-    char padding3[4];
+struct queueManager{   
     struct queueElement *head;
-    //char padding2[8];
-    struct queueElement *tail;
+    struct queueElement *tail;  
+    pthread_mutex_t lock;
     char* name;
+    int size;
+    char padding[4];
 };
 
 struct queueVector{

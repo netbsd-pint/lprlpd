@@ -48,6 +48,7 @@ int addElement(struct job *input){
     struct queueManager *queue = findQueue(input->p->name);
 
     struct queueElement *current = malloc(sizeof(struct queueElement));
+    pthread_mutex_lock(&queue->lock);
     current->data = input;
 
     if(queue->size == 0){
@@ -62,6 +63,7 @@ int addElement(struct job *input){
     }
 
     queue->size++;
+    pthread_mutex_unlock(&queue->lock);
     return 0;
 }
 
@@ -72,9 +74,11 @@ struct queueElement* pop(struct queueManager *queue){
     if(queue->size == 0){
         return NULL;
     }
+    pthread_mutex_lock(&queue->lock);
     queue->size--;
     returnValue=queue->head;
     queue->head = returnValue->previous;
+    pthread_mutex_unlock(&queue->lock);
     return returnValue;
 }
 
@@ -83,6 +87,7 @@ void queueEdit(struct queueManager *queue,int index){
     if(index >= queue->size || index == 0){
         return;
     }
+    pthread_mutex_lock(&queue->lock);
     struct queueElement *current = queue->head;
     struct queueElement *newhead;
     for(int i=0; i<index-1;i++){
@@ -92,7 +97,7 @@ void queueEdit(struct queueManager *queue,int index){
     current->previous = current->previous->previous;
     newhead->previous = queue->head;
     queue->head = newhead;
-
+    pthread_mutex_unlock(&queue->lock);
 
 }
 
@@ -110,6 +115,10 @@ void queueInit(void){
 
     //i = cgetfirst(&printcap_buffer, printcapdb);
     i =cgetfirst(&printcap_buffer, printcapdb);
+    if (i == 0){
+      // ERROR:
+      //puts("ERROR:printcap is empty/doesn't exist");
+    }
     do{
         if(queueList.size == queueList.length){
             if(realloc(queueList.queues,(unsigned long) queueList.length*2*sizeof(struct queueManager)) == NULL){
@@ -125,6 +134,8 @@ void queueInit(void){
                 queueList.queues[queueList.size].name = strdup(printcap_buffer);
                 printcap_buffer[j] = ':';
                 queueList.size++;
+                //TODO: check this call.
+                pthread_mutex_init(&queueList.queues[queueList.size].lock, NULL);
                 break;
             }
         }
