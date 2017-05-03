@@ -1,5 +1,7 @@
 #ifndef PRINTQUEUE_H
 #define PRINTQUEUE_H
+//change this back
+
 #include "print_job.h"
 
 struct queueElement{
@@ -31,7 +33,12 @@ int addElement(struct job *input);
 void queueEdit(struct queueManager* queue, int index);
 void queueInit(void);
 
+
 void babysitQueue(void);
 void needManagers(void);
+
+// stuff added for testing 
+void checkQueue(void);
+struct queueManager* findQueue(char* queueName);
 
 #endif
