@@ -1,6 +1,50 @@
 /* File imeplements new/delete functions for the lpr_flags_st */
 
-#include "lpr_job.h"
+#include "lpr_flags.h"
+
+struct job_file_ll *
+new_job_file_ll (char *filename)
+{
+  struct job_file_ll *jf = (struct job_file_ll*) malloc (sizeof (struct job_file_ll));
+
+  if (jf) {
+    jf->filename = filename;
+    jf->filemime = NULL;
+    jf->next = NULL;
+  } else {
+    printf ("Failed to malloc in new_job_file_ll.\n");
+    exit (1);
+  }
+
+  return jf;
+}
+
+void
+free_job_file_ll (struct job_file_ll *jf)
+{
+  struct job_file_ll *tmp = NULL;
+
+  while (jf) {
+    tmp = jf->next;
+    free (jf->filename);
+    free (jf->filemime);
+    free (jf);
+    jf = tmp;
+  }
+}
+
+/* Appends the n to l */
+void
+job_file_ll_append (struct job_file_ll *l, struct job_file_ll *n)
+{
+  struct job_file_ll *tmp = NULL;
+
+  while (l) {
+    tmp = l;
+    l = l->next;
+  }
+  tmp->next = n;
+}
 
 struct lpr_flags *
 new_lpr_flags (char *username, char *hostname)
@@ -13,8 +57,7 @@ new_lpr_flags (char *username, char *hostname)
 
   j->username = username;
   j->hostname = hostname;
-  j->filemime = NULL;
-  j->filename = NULL;
+  j->files = NULL;
   j->cflag = false;
   j->dflag = false;
   j->fflag = false;
@@ -31,7 +74,7 @@ new_lpr_flags (char *username, char *hostname)
   j->rflag = false;
   j->sflag = false;
   j->Rflag = false;
-  j->copies = -1;
+  j->copies = 1;
   j->fontnum = -1;
   j->font = NULL;
   j->Cflag = NULL;
@@ -49,8 +92,7 @@ delete_lpr_flags (struct lpr_flags *j)
 {
   free (j->username);
   free (j->hostname);
-  free (j->filemime);
-  free (j->filename);
+  free_job_file_ll (j->files);
   free (j->font);
   free (j->Cflag);
   free (j->Jflag);

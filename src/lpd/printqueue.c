@@ -26,7 +26,7 @@ struct queueManager* findQueue(char* queueName){
         }
       }
       if(strcmp(queueName,&current->name[anchor]) == 0){
-        puts(&current->name[anchor]);
+        puts(&current->name[anchor]); 
       return current;
       }
   }
