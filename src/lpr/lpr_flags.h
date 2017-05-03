@@ -5,14 +5,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* A linked list for the file's and their mime's */
+struct job_file_ll {
+  char *filename;
+  char *filemime;
+  struct job_file_ll *next;
+};
+
+/* A structure representation of input to lpr */
 struct lpr_flags {
   char *Jflag;    /* Job name to print on the burst page. Normally the file's name is used. */
   char *Tflag;    /* Title name for pr(1), instead of file name. */
   char *Uflag;    /* user name to print on the burst page, also for accounting purposes. */
   char *username; /* username of user requesting printing */
   char *hostname; /* Hostname of the request's origin */
-  char *filemime; /* mime type of file to be printed */
-  char *filename; /* full path of file to be printed */
+  struct job_file_ll *files; /* A linked list of files with mimes for the print job */
   char *font;     /* Specifies a font to be mounted on font position i. */
   char *Cflag;    /* A c string: Job classification to use on the burst page. */
   int iflag;      /* the output is indented by numcols. */
@@ -37,5 +44,10 @@ struct lpr_flags {
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
 };
 
+/* job_file_ll protos */
+struct job_file_ll * new_job_file_ll (char *filename);
+void free_job_file_ll (struct job_file_ll *jf);
+void job_file_ll_append (struct job_file_ll *l, struct job_file_ll *n);
+/* lpr_flags protos */
 struct lpr_flags * new_lpr_flags (char *username, char *hostname);
 void delete_lpr_flags (struct lpr_flags *j);
