@@ -1,7 +1,8 @@
 #ifndef PRINTQUEUE_H
 #define PRINTQUEUE_H
 //change this back
-#include "../common/print_job.h"
+
+#include "print_job.h"
 
 struct queueElement{
     struct job *data; // this is going to be a job struct
