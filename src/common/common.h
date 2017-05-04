@@ -27,6 +27,7 @@ struct print_ops {
 
 extern struct print_ops printingAPI[2];
 
+int get_connection(const char *address, const char *port)
 void free_printer (struct printer *printer);
 const char * gethost (const char *hname);
 int getprintcap (struct printer *printer);
