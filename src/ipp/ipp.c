@@ -58,48 +58,6 @@ static char * match_token(char *buf, char *token) {
   return buf;
 }
 
-int ipp_connect(const char *address, const char *port) {
-  int fd = -1;
-  int error;
-  const char *cause = NULL;
-  struct addrinfo hints, *res, *res0;
-
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_UNSPEC;
-  hints.ai_socktype = SOCK_STREAM;
-
-  error = getaddrinfo(address, port, &hints, &res0);
-
-  if (error) {
-    errx(1, "%s", gai_strerror(error));
-  }
-
-  for (res = res0; res; res = res->ai_next) {
-    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-    if (fd < 0) {
-      cause = "socket";
-      continue;
-    }
-
-    if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
-      cause = "connect";
-      close(fd);
-      fd = -1;
-      continue;
-    }
-
-    /* connected */
-    break;
-  }
-
-  if (fd < 0) {
-    perror(cause);
-  }
-
-  return fd;
-}
-
 struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id) {
   struct ipp_wire_header *header = (struct ipp_wire_header *) malloc(sizeof(struct ipp_wire_header));
 

@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if ((fd = ipp_connect("140.160.139.120", "631")) > -1){
+  if ((fd = get_connection("140.160.139.120", "631")) > -1){
     ipp_test_print(fd, argv[1]);
     close(fd);
   }
