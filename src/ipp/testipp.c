@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "ipp.h"
 
 int main(int argc, char **argv) {
