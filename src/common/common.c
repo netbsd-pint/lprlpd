@@ -1,5 +1,11 @@
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "common.h"
 
@@ -23,6 +29,47 @@ void setupprotocol (void) {
   */
 }
 
+int get_connection(const char *address, const char *port) {
+  int fd = -1;
+  int error;
+  const char *cause = NULL;
+  struct addrinfo hints, *res, *res0;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+
+  error = getaddrinfo(address, port, &hints, &res0);
+
+  if (error) {
+    err(1, "%s", gai_strerror(error));
+  }
+
+  for (res = res0; res; res = res->ai_next) {
+    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    if (fd < 0) {
+      cause = "socket";
+      continue;
+    }
+
+    if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
+      cause = "connect";
+      close(fd);
+      fd = -1;
+      continue;
+    }
+
+    /* connected */
+    break;
+  }
+
+  if (fd < 0) {
+    perror(cause);
+  }
+
+  return fd;
+}
 
 int
 getprintcap (struct printer *printer) {
