@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "print_job.h"
+
 /* IPP Operation types */
 enum ipp_op {
   IPP_OP_PRINT_JOB        = 0x02,
@@ -139,5 +141,12 @@ bool ipp_parse_headers(char *headers, const size_t headers_len,
                        struct ipp_wire_header *ipp_msg, size_t *file_len);
 void ipp_test_print(int sockfd, const char *text_file);
 void ipp_get_attributes(int sockfd);
+
+/* Generic Printer API Calls */
+struct job_stat* ipp_job_stats(const struct job *j);
+int ipp_print_file(const struct job *j);
+int ipp_printer_status(struct printer *j);
+int ipp_resume_job(const struct job *j);
+int ipp_stop_job(const struct job *j);
 
 #endif /* !IPP_H_ */

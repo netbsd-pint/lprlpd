@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "common.h"
 #include "ipp.h"
 
 #define ISNEWLINE(x) (x == '\n' || x == '\r')
@@ -267,90 +268,117 @@ bool ipp_parse_headers(char *headers, const size_t headers_len, struct ipp_wire_
   return true;
 }
 
-void ipp_test_print(int sockfd, const char *text_file) {
+int ipp_print_file(const struct job *j) {
   char *http_request = 0;
   size_t http_req_len = 0;
   char tmp_buf[4096] = {0};
 
+  char *host = 0;
+  char *port = 0;
+  
+  char **file_name = j->file_names;
+
   ssize_t rc = 0;
 
-  int filefd = open(text_file, O_RDONLY);
+  int filefd;
+  int sockfd;
   size_t file_len = 0;
   struct stat file_stat;
 
-  if (!filefd)
-    return;
+  while (*file_name) {
 
-  if (fstat(filefd, &file_stat) < 0) {
-    close(filefd);
-    return;
-  }
+    filefd = open(*file_name, O_RDONLY);
 
-  file_len = (size_t) file_stat.st_size;
+    if (!filefd)
+      return -1;
 
-  struct ipp_wire_header *ipp_header = ipp_mk_wire_header(IPP_OP_PRINT_JOB, (int32_t) random());
-
-  if (!ipp_header)
-    return;
-
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
-
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
-
-  /* TODO: This address:port/path shouldn't be hard coded */
-  snprintf(tmp_buf, sizeof(tmp_buf), "http://%s/%s", "140.160.139.120:631", "ipp");
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
-
-  /* TODO: Insert real username here */
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
-
-  /* TODO: Insert real job name here */
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
-
-  /* TODO: Insert actual mime-type here */
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
-
-  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
-
-  /* TODO: This address:port/path shouldn't be hard coded */
-  http_request = ipp_mk_http_request("140.160.139.120", "631", "/ipp", ipp_header, file_len, &http_req_len);
-
-  printf("HTTP REQ LEN: %zu\n", http_req_len);
-
-  if (http_request) {
-    printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
-
-    rc = write(sockfd, http_request, http_req_len);
-    printf("Write (HTTP+IPP) RC: %zd\n", rc);
-
-    while ((rc = read(filefd, tmp_buf, sizeof(tmp_buf))) > 0) {
-      rc = write(sockfd, tmp_buf, (size_t)rc);
-      printf("Write (FILE) RC: %zd\n", rc);
+    if (fstat(filefd, &file_stat) < 0) {
+      close(filefd);
+      return -1;
     }
 
-    close(filefd);
+    file_len = (size_t) file_stat.st_size;
 
-    filefd = open("response.bin", O_WRONLY);
+    struct ipp_wire_header *ipp_header = ipp_mk_wire_header(IPP_OP_PRINT_JOB, (int32_t) random());
 
-    rc = 1;
+    if (!ipp_header)
+      return -1;
 
-    while (rc > 0) {
-      rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
-      if (rc > 0) {
-        write(filefd, tmp_buf, (size_t)rc);
-        tmp_buf[rc - 1] = 0;
-        printf("Read (RC: %zd): %s\n", rc, tmp_buf);
+    get_address_port(j->hostname, "631", &host, &port);
+
+    sockfd = get_connection(host, port);
+
+    if (sockfd == -1) {
+      free(host);
+      free(port);
+      return -1;
+    }
+
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
+
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_CHARSET, "attributes-charset", "utf-8");
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NATURAL_LANGUAGE, "attributes-natural-language", "en-us");
+
+    /* TODO: Path shouldn't be hardcoded */
+    snprintf(tmp_buf, sizeof(tmp_buf), "http://%s:%s/%s", host, port, "ipp");
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_URI, "printer-uri", tmp_buf);
+
+    /* TODO: Insert real username here */
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
+
+    /* TODO: Insert real job name here */
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "job-name", "test");
+
+    /* TODO: Insert actual mime-type here, after confirming support */
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_MIME_TYPE, "document-format", "application/octet-stream");
+
+    ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
+
+    /* TODO: This path (/ipp) shouldn't be hard coded */
+    http_request = ipp_mk_http_request(host, port, "/ipp", ipp_header, file_len, &http_req_len);
+
+    printf("HTTP REQ LEN: %zu\n", http_req_len);
+
+    if (http_request) {
+      printf("Generated HTTP Request:\n--------------------------------------------------------------------------------\n%s\n", http_request);
+
+      rc = write(sockfd, http_request, http_req_len);
+      printf("Write (HTTP+IPP) RC: %zd\n", rc);
+
+      while ((rc = read(filefd, tmp_buf, sizeof(tmp_buf))) > 0) {
+        rc = write(sockfd, tmp_buf, (size_t)rc);
+        printf("Write (FILE) RC: %zd\n", rc);
       }
+
+      close(filefd);
+
+      filefd = open("response.bin", O_WRONLY);
+
+      rc = 1;
+
+      while (rc > 0) {
+        rc = read(sockfd, tmp_buf, sizeof(tmp_buf));
+        if (rc > 0) {
+          write(filefd, tmp_buf, (size_t)rc);
+          tmp_buf[rc - 1] = 0;
+          printf("Read (RC: %zd): %s\n", rc, tmp_buf);
+        }
+      }
+
+      close(filefd);
+
+      free(http_request);
     }
 
-    close(filefd);
+    ipp_free_wire_header(ipp_header);
 
-    free(http_request);
+    ++file_name;
+    close(sockfd);
+    free(host);
+    free(port);
   }
 
-  ipp_free_wire_header(ipp_header);
-
+  return 0;
 }
 
 void ipp_get_attributes(int sockfd) {
