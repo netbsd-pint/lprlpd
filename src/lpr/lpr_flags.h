@@ -45,7 +45,7 @@ struct lpr_flags {
 };
 
 /* job_file_ll protos */
-struct job_file_ll * new_job_file_ll (char *filename);
+struct job_file_ll * new_job_file_ll (char *filename, char *filemime);
 void free_job_file_ll (struct job_file_ll *jf);
 void job_file_ll_append (struct job_file_ll *l, struct job_file_ll *n);
 /* lpr_flags protos */

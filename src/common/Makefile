@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
-
+MKDEBUG=yes
 LIBISPRIVATE= yes
 
 LIB= common
