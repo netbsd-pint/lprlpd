@@ -1,10 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
 #include "printqueue.h"
-#include "../common/common.h"
-#include "../common/print_job.h"
-
 
 void *manageQueue(void* queue);
 
@@ -56,7 +54,7 @@ int addElement(struct job *input){
     if(queue->size == 0){
         queue->head = current;
         queue->tail = current;
-        pthread_mutex_unlock(queue->sleep);
+        sem_post(queue->test);
     }else{
         current->previous = NULL;
         queue->tail->previous = current;
@@ -145,10 +143,14 @@ void queueInit(void){
 
                 //TODO: check this call.
                 queueList.queues[queueList.size].lock = malloc(sizeof(pthread_mutex_t));
-                queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
+            //    queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
+                  queueList.queues[queueList.size].test = malloc(sizeof(sem_t));
                 pthread_mutex_init(queueList.queues[queueList.size].lock, NULL);
-                pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
+            //    pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
+                sem_init(queueList.queues[queueList.size].test,0,0);
                 queueList.size++;
+
+
                 break;
             }
         }
@@ -167,6 +169,8 @@ void queueInit(void){
     }
 
     // TODO: rebuild the queue right here.
+
+
 }
 
 //Prints out all of the queue names.
@@ -182,18 +186,19 @@ void *manageQueue(void* ptr){
     struct queueManager *queue = ptr;
     struct queueElement *current;
     printf("managing queue:%s\n",queue->name);
-    pthread_mutex_lock(queue->sleep);
+    //pthread_mutex_lock(queue->sleep);
     while(1){
         if(queue->size == 0){
             printf("Nothing in  queue:%s, going to sleep\n",queue->name);
-            pthread_mutex_lock(queue->sleep);
+        //    pthread_mutex_lock(queue->sleep);
+            sem_wait(queue->test);
         }
 
-        pthread_mutex_lock(queue->lock);
+        //pthread_mutex_lock(queue->lock);
         current = pop(queue);
         printf("I woke up, and now I'm doing a job for %s",current->data->username);
         //clean up
-        pthread_mutex_unlock(queue->lock);
+        //pthread_mutex_unlock(queue->lock);
 
     }
 

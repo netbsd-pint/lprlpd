@@ -2,6 +2,7 @@
 #define PRINTQUEUE_H
 //change this back
 #include<pthread.h>
+#include<semaphore.h>
 #include "print_job.h"
 
 struct queueElement{
@@ -14,7 +15,8 @@ struct queueManager{
     struct queueElement *head;
     struct queueElement *tail;
     pthread_mutex_t *lock;
-    pthread_mutex_t *sleep;
+    //pthread_mutex_t *sleep;
+    sem_t *test;
     char* name;
     int size;
     char padding[4];
