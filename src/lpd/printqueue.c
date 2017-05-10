@@ -13,7 +13,6 @@ static struct queueVector queueList;
 struct queueManager* findQueue(char* queueName){
   struct queueManager *current;
   int anchor = 0;
-
   for(int i = 0; i<queueList.size; i++){
     current = &queueList.queues[i];
       for(int j = 0; j < (int) strlen(current->name); j++){
@@ -115,6 +114,7 @@ int queueEdit(struct job *data){
 void queueInit(void){
     const char *printcapdb[2] = {"/etc/printcap", 0};
     int i;
+    int lastName =0;
     char* printcap_buffer;
     queueList.size = 0;
     queueList.queues = malloc(sizeof(struct queueManager)*2);
@@ -135,11 +135,13 @@ void queueInit(void){
             queueList.length *= 2;
         }
         for(int j = 0; j < (int) strlen(printcap_buffer);j++){
-            // extract the name of the printer.
+            if(printcap_buffer[j] == '|'){
+                lastName = j;
+            }
             if(printcap_buffer[j] == ':'){
-                printcap_buffer[j] ='\0';
+                printcap_buffer[lastName] ='\0';
                 queueList.queues[queueList.size].name = strdup(printcap_buffer);
-                printcap_buffer[j] = ':';
+                printcap_buffer[lastName] = '|';
 
                 //TODO: check this call.
                 queueList.queues[queueList.size].lock = malloc(sizeof(pthread_mutex_t));
@@ -151,7 +153,8 @@ void queueInit(void){
             }
         }
         //TODO: fix the memory leak here. cgetnext/first malloc a buffer for the string.
-        //free(printcap_buffer);
+        // I think it's fixed?
+        free(printcap_buffer);
     }while((i =cgetnext(&printcap_buffer, printcapdb)) == 1);
     // right here I should go search and populate the threads.
     // Start the baby sitting of the threads
