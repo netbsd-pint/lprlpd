@@ -14,6 +14,7 @@
 #include <signal.h>
 #include "server.h"
 #include "threadpool.h"
+#include "printqueue.h"
 
 
 void sighandler(int num) __attribute__ ((noreturn));
@@ -41,9 +42,11 @@ int main(){
     printf("Listening on port %d\n", port);
 
 
-
+    queueInit();
     thread_pool_init();
+
     serverLoop(fd);
+
 
 
 }
@@ -111,7 +114,7 @@ void serverLoop(int FD){
 }
 
 void sighandler(int num){
-  
+
   close(globalport);
   _exit(num);
 }

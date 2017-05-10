@@ -6,7 +6,7 @@
 #include "threadpool.h"
 #include<pthread.h>
 
-void add_thread(void);                  
+void add_thread(void);
 int getFileID(void);
 
 
@@ -56,7 +56,7 @@ void* worker_thread (void* dataPointer){
     struct server_thread* self = malloc(sizeof(struct server_thread));
     self = memcpy(self, dataPointer, sizeof(struct server_thread));
     //^important v not important
-    
+
     //TODO make the structures the thread needs for holding data.
 
     //Syncing
@@ -64,7 +64,7 @@ void* worker_thread (void* dataPointer){
 
     //Everything above this is for setting up the thread.
     while(1){
-
+        puts("here");
         //Each thread waits until it is unlocked.
         pthread_mutex_lock(self->lock);
 
@@ -154,6 +154,8 @@ void add_thread(void){
     threads->current++;
     // Waiting for the thread to be done.
     // I might want to replace this with a mutex.
-    while (globalLock == 1){}
+    while (globalLock == 1){
+        puts("a");
+    }
 
 }

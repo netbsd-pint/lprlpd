@@ -10,10 +10,11 @@ struct queueElement{
     //char padding[8];
 };
 
-struct queueManager{   
+struct queueManager{
     struct queueElement *head;
-    struct queueElement *tail;  
-    pthread_mutex_t lock;
+    struct queueElement *tail;
+    pthread_mutex_t *lock;
+    pthread_mutex_t *sleep;
     char* name;
     int size;
     char padding[4];
@@ -30,14 +31,14 @@ struct queueVector{
 struct queueElement* pop(struct queueManager *queue);
 int addElement(struct job *input);
 
-void queueEdit(struct queueManager* queue, int index);
+int queueEdit(struct job *data);
 void queueInit(void);
 
 
 void babysitQueue(void);
 void needManagers(void);
 
-// stuff added for testing 
+// stuff added for testing
 void checkQueue(void);
 struct queueManager* findQueue(char* queueName);
 
