@@ -128,8 +128,6 @@ struct ipp_wire_header {
   char *tags;
 };
 
-int ipp_connect(const char *address, const char *port);
-
 struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id);
 void ipp_free_wire_header(struct ipp_wire_header *header);
 bool ipp_wire_header_add_tag(struct ipp_wire_header *header, const char tag,

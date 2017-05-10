@@ -1,15 +1,19 @@
 /* File imeplements new/delete functions for the lpr_flags_st */
 
+#include <string.h>
+
 #include "lpr_flags.h"
 
 struct job_file_ll *
-new_job_file_ll (char *filename)
+new_job_file_ll (char *filename, char *filemime)
 {
   struct job_file_ll *jf = (struct job_file_ll*) malloc (sizeof (struct job_file_ll));
+  size_t fname_len = strlen (filename) + 1;
 
   if (jf) {
-    jf->filename = filename;
-    jf->filemime = NULL;
+    jf->filename = (char*) malloc (fname_len);
+    (void) strlcpy (jf->filename, filename, fname_len);
+    jf->filemime = filemime;
     jf->next = NULL;
   } else {
     printf ("Failed to malloc in new_job_file_ll.\n");

@@ -1,5 +1,11 @@
+#include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "common.h"
 
@@ -23,6 +29,47 @@ void setupprotocol (void) {
   */
 }
 
+int get_connection(const char *address, const char *port) {
+  int fd = -1;
+  int error;
+  const char *cause = NULL;
+  struct addrinfo hints, *res, *res0;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+
+  error = getaddrinfo(address, port, &hints, &res0);
+
+  if (error) {
+    err(1, "%s", gai_strerror(error));
+  }
+
+  for (res = res0; res; res = res->ai_next) {
+    fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    if (fd < 0) {
+      cause = "socket";
+      continue;
+    }
+
+    if (connect(fd, res->ai_addr, res->ai_addrlen) < 0) {
+      cause = "connect";
+      close(fd);
+      fd = -1;
+      continue;
+    }
+
+    /* connected */
+    break;
+  }
+
+  if (fd < 0) {
+    perror(cause);
+  }
+
+  return fd;
+}
 
 int
 getprintcap (struct printer *printer) {
@@ -51,13 +98,13 @@ getprintcap (struct printer *printer) {
   free_printer (printer);
 
   /* TODO: strdup default string values. */
-  printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? PATH_DEFDEVLP : line;
-  printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? DEFAULT_PRINTER : line;
-  printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? PATH_DEFSPOOL : line;
-  printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? DEFLOCK : line;
-  printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? DEFSTAT : line;
+  printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
+  printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? strdup (DEFAULT_PRINTER) : line;
+  printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? strdup (PATH_DEFSPOOL) : line;
+  printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? strdup (DEFLOCK) : line;
+  printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? strdup (DEFSTAT) : line;
   printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
-  printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? PATH_CONSOLE : line;
+  printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? strdup (PATH_CONSOLE) : line;
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;
   /* TODO add in the check for lpr/ipp */
   if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0)
@@ -77,7 +124,7 @@ getprintcap (struct printer *printer) {
 struct printer *
 new_printer (char *printer_name)
 {
-  struct printer *p = (struct printer *) malloc (sizeof (struct printer));
+  struct printer *p = (struct printer *) calloc (1, sizeof (struct printer));
 
   if (p == NULL) {
     printf ("Failed to malloc in new_printer.");
@@ -91,22 +138,22 @@ new_printer (char *printer_name)
 void //maybe free printer_name (memory leak?)
 free_printer (struct printer *printer)
 {
-  if (printer->local_printer && (strcmp(printer->local_printer, PATH_DEFDEVLP) == 0)){
+  if (printer->local_printer){
     free(printer->local_printer);
   }
-  if (printer->remote_printer && (strcmp(printer->remote_printer, DEFAULT_PRINTER) == 0)){
+  if (printer->remote_printer){
     free(printer->remote_printer);
   }
-  if (printer->spooling_dir && (strcmp(printer->spooling_dir, PATH_DEFSPOOL) == 0)){
+  if (printer->spooling_dir){
     free(printer->spooling_dir);
   }
-  if (printer->lock_file && (strcmp(printer->lock_file, DEFLOCK) == 0)){
+  if (printer->lock_file){
     free(printer->lock_file);
   }
-  if (printer->status_file && (strcmp(printer->status_file, DEFSTAT) == 0)){
+  if (printer->status_file){
     free(printer->status_file);
   }
-  if (printer->log_file && (strcmp(printer->log_file, PATH_CONSOLE) == 0)){
+  if (printer->log_file){
     free(printer->log_file);
   }
   if (printer->remote_printer != NULL){
