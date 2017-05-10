@@ -95,15 +95,26 @@ getprintcap (struct printer *printer) {
     return -1;
   }
 
+  /*lp|brother:\
+        :lp=:sh:sd=/var/spool/lpd/lp:\
+        rm=140.160.139.120:\
+        lf=/var/log/lpd-errs:mx#0:
+
+  #lp|local line printer:\
+  #       :sh:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
+  */
+
   free_printer (printer);
 
-  /* TODO: strdup default string values. */
+
+  /* TODO: strdup default string values.
+           why are their two remote printers?*/
   printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
   printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? strdup (DEFAULT_PRINTER) : line;
   printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? strdup (PATH_DEFSPOOL) : line;
   printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? strdup (DEFLOCK) : line;
   printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? strdup (DEFSTAT) : line;
-  printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
+  printer->remote_host = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
   printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? strdup (PATH_CONSOLE) : line;
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;
   /* TODO add in the check for lpr/ipp */
@@ -117,7 +128,13 @@ getprintcap (struct printer *printer) {
      printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
      }
   */
-
+  //test what was set from reading the printcap file
+  /*printf("Printer location: %s\n", printer->local_printer); //why is this showing up with nothing?
+  printf("Is it a remote printer?: %s\n", printer->remote_printer);
+  printf("Spooling directory: %s\n", printer->spooling_dir);
+  printf("Lock File?: %s\n",   printer->lock_file);
+  printf("File Status: %s\n", printer->status_file);
+  prinf("Is it a remote printer?: %s\n", )*/
   return 0;
 }
 
@@ -156,8 +173,8 @@ free_printer (struct printer *printer)
   if (printer->log_file){
     free(printer->log_file);
   }
-  if (printer->remote_printer != NULL){
-    free(printer->remote_printer);
+  if (printer->remote_host != NULL){
+    free(printer->remote_host);
   }
 }
 

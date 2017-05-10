@@ -9,6 +9,7 @@ struct printer {
   char* log_file;
   char* name;
   char* remote_printer;
+  char* remote_host;
   char* spooling_dir;
   char* status_file;
   char* restr_group;
