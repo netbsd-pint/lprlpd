@@ -104,12 +104,16 @@ getprintcap (struct printer *printer) {
   #       :sh:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
   */
 
+
+  // I am trying to get -P flag working... sooooo (-P brother) should print to the brother printer!
+  // currently testing and working on fixing it to work
+  //printf("print name : %s \n", printer->name);
   free_printer (printer);
 
 
   /* TODO: strdup default string values.
            why are their two remote printers?*/
-  printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
+  printer->local_printer = cgetstr(printcap_buffer, printer->name, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
   printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? strdup (DEFAULT_PRINTER) : line;
   printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? strdup (PATH_DEFSPOOL) : line;
   printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? strdup (DEFLOCK) : line;
@@ -128,13 +132,6 @@ getprintcap (struct printer *printer) {
      printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
      }
   */
-  //test what was set from reading the printcap file
-  /*printf("Printer location: %s\n", printer->local_printer); //why is this showing up with nothing?
-  printf("Is it a remote printer?: %s\n", printer->remote_printer);
-  printf("Spooling directory: %s\n", printer->spooling_dir);
-  printf("Lock File?: %s\n",   printer->lock_file);
-  printf("File Status: %s\n", printer->status_file);
-  prinf("Is it a remote printer?: %s\n", )*/
   return 0;
 }
 

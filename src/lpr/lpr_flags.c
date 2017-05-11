@@ -73,7 +73,6 @@ new_lpr_flags (char *username, char *hostname)
   j->tflag = false;
   j->hflag = false;
   j->mflag = false;
-  j->Pflag = false;
   j->qflag = false;
   j->rflag = false;
   j->sflag = false;
@@ -84,6 +83,7 @@ new_lpr_flags (char *username, char *hostname)
   j->Cflag = NULL;
   j->iflag = -1;
   j->Jflag = NULL;
+  j->Pflag = NULL;
   j->Tflag = NULL;
   j->Uflag = NULL;
   j->wflag = -1;

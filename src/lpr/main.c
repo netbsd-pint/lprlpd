@@ -275,7 +275,28 @@ main (int argc, char **argv)
     exit (1);
   }
 
-  /* TODO: Use the printcap and flags to build a job for the appropriate proto */
+  /* TODO: Use the printcap and flags to build a job for the appropriate proto
+
+        //email & jobname & extra can all be NULL. The rest have to be all be set.
+      struct job {
+      char **file_names;
+      char **mime_types;
+
+      char *email;
+      char *username;
+      char *hostname;
+      char *job_id;   //random number (has to be a number in ascii text)
+      char *job_name;
+
+      struct printer* p;
+
+      void *extra;   // Contains extra data depends on mimetype
+
+      size_t copies;
+
+      bool burst_page;
+      };
+    */
 
   return 0;
 }
