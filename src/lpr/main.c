@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "lpr_flags.h"
+#include "../common/printer.h"
 #include "../common/common.h"
 
 static int usage (void);
@@ -99,7 +100,7 @@ parse_commandline (int argc, char **argv)
     exit (1);
   }
 
-  while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:cdfghlmnopPqrRstv")) != -1) {
+  while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:P:cdfghlmnopqrRstv")) != -1) {
     switch (ch[0]) {
     case '#':
       f->copies = atoi (optarg);
@@ -126,6 +127,9 @@ parse_commandline (int argc, char **argv)
     case 'i':
       f->iflag = atoi (optarg);
       break;
+    case 'P':
+      f->Pflag = optarg;
+      break;
       /* the rest of these flags are booleans */
     case 'c': f->cflag = true; break;
     case 'd': f->dflag = true; break;
@@ -137,7 +141,6 @@ parse_commandline (int argc, char **argv)
     case 'n': f->nflag = true; break;
     case 'o': f->oflag = true; break;
     case 'p': f->pflag = true; break;
-    case 'P': f->Pflag = true; break;
     case 'q': f->qflag = true; break;
     case 'r': f->rflag = true; break;
     case 'R': f->Rflag = true; break;
@@ -164,7 +167,11 @@ parse_commandline (int argc, char **argv)
   if (read_stdin) { /* Just print the input from stdin */
     file_from_stdin (template);
     f->files = new_job_file_ll (template, get_mime_type (template));
-  } else { /* Print the files supplied by user */
+  }
+
+
+
+  else { /* Print the files supplied by user */
     while (optind < argc) {
       printf ("FILENAME:\t%s\n", argv[optind]);
       if (access (argv[optind], F_OK) != -1) {
@@ -217,13 +224,31 @@ print_lpr_flags (struct lpr_flags *f)
     tmp = tmp->next;
   }
 
-  /*
+
   printf ("With options:\n");
   if (f) {
-    printf ("Jflags: %s\nTflag: %s\nUflag: %s\nfont: %s\nCflag: %s\ncopies: %d\n",
-            f->Jflag, f->Tflag, f->Uflag, f->font, f->Cflag, f->copies);
+    printf ("Jflags: %s\nTflag: %s\nUflag: %s\nfont: %s\nCflag: %s\ncopies: %d\nPflag: %s\n",
+            f->Jflag, f->Tflag, f->Uflag, f->font, f->Cflag, f->copies, f->Pflag);
   }
-  */
+
+}
+static void
+print_printcap_flags(struct printer *printer)
+{
+    //test what was set from reading the printcap file
+
+    if(printer->local_printer[0] == '\0'){
+      printf("Local Printer: Null\n");
+    }
+    else{
+      printf("Local Printer: %s\n", printer->local_printer);
+    }
+    printf("Is it a remote printer?: %s\n", printer->remote_printer);
+    printf("Spooling directory: %s\n", printer->spooling_dir);
+    printf("Lock File?: %s\n",   printer->lock_file);
+    printf("File Status: %s\n", printer->status_file);
+    printf("remote printer host?: %s\n", printer->remote_host);
+    printf("Log file set: %s\n", printer->log_file);
 }
 
 /* Entry point of the lpr command line utility
@@ -260,7 +285,13 @@ main (int argc, char **argv)
   }
 
   /* try to get a printer or die trying */
-  printername = getenv ("PRINTER");
+  if(flags->Pflag != NULL){
+    printername = flags->Pflag;
+    printf("Printer name: %s\n", printername);
+  }
+  else{
+    printername = getenv ("PRINTER");
+  }
   if (!printername) {
     printername = strdup("lp");
     printf ("No printer set in PRINTER environment variable... Defaulting to 'lp'.\n");
@@ -274,8 +305,15 @@ main (int argc, char **argv)
     printf ("Failed to load printcap entry for %s.\n", printcap->name);
     exit (1);
   }
+  /* testing purposes */
+  print_printcap_flags(printcap);
+
+
+
+
 
   /* TODO: Use the printcap and flags to build a job for the appropriate proto
+
 
         //email & jobname & extra can all be NULL. The rest have to be all be set.
       struct job {
