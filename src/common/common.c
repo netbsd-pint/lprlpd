@@ -95,15 +95,30 @@ getprintcap (struct printer *printer) {
     return -1;
   }
 
+  /*lp|brother:\
+        :lp=:sh:sd=/var/spool/lpd/lp:\
+        rm=140.160.139.120:\
+        lf=/var/log/lpd-errs:mx#0:
+
+  #lp|local line printer:\
+  #       :sh:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
+  */
+
+
+  // I am trying to get -P flag working... sooooo (-P brother) should print to the brother printer!
+  // currently testing and working on fixing it to work
+  //printf("print name : %s \n", printer->name);
   free_printer (printer);
 
-  /* TODO: strdup default string values. */
-  printer->local_printer = cgetstr(printcap_buffer, DEFAULT_PRINTER, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
+
+  /* TODO: strdup default string values.
+           why are their two remote printers?*/
+  printer->local_printer = cgetstr(printcap_buffer, printer->name, &line) == -1 ? strdup (PATH_DEFDEVLP) : line;
   printer->remote_printer = cgetstr(printcap_buffer, "rp", &line) == -1 ? strdup (DEFAULT_PRINTER) : line;
   printer->spooling_dir = cgetstr(printcap_buffer, "sd", &line) == -1 ? strdup (PATH_DEFSPOOL) : line;
   printer->lock_file = cgetstr(printcap_buffer, "lo", &line) == -1 ? strdup (DEFLOCK) : line;
   printer->status_file = cgetstr(printcap_buffer, "st", &line) == -1 ? strdup (DEFSTAT) : line;
-  printer->remote_printer = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
+  printer->remote_host = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
   printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? strdup (PATH_CONSOLE) : line;
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;
   /* TODO add in the check for lpr/ipp */
@@ -117,7 +132,6 @@ getprintcap (struct printer *printer) {
      printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? _PATH_CONSOLE : line;
      }
   */
-
   return 0;
 }
 
@@ -156,8 +170,8 @@ free_printer (struct printer *printer)
   if (printer->log_file){
     free(printer->log_file);
   }
-  if (printer->remote_printer != NULL){
-    free(printer->remote_printer);
+  if (printer->remote_host != NULL){
+    free(printer->remote_host);
   }
 }
 

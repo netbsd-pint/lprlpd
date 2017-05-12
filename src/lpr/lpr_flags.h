@@ -22,6 +22,7 @@ struct lpr_flags {
   struct job_file_ll *files; /* A linked list of files with mimes for the print job */
   char *font;     /* Specifies a font to be mounted on font position i. */
   char *Cflag;    /* A c string: Job classification to use on the burst page. */
+  char *Pflag;     /* Force output to a specific printer. Normally, the default printer is used or the value of the environment variable PRINTER. */
   int iflag;      /* the output is indented by numcols. */
   int copies;     /* How many copies to print. */
   int fontnum;    /* Number of font, I don't really understand this */
@@ -36,12 +37,12 @@ struct lpr_flags {
   bool nflag;     /* The file are assumed to contain data from ditroff (device independent troff). */
   bool oflag;     /* The files are assumed to be in postscript format. */
   bool pflag;     /* Use pr(1) to fornat the files (equivalent to print). */
-  bool Pflag;     /* Force output to a specific printer. Normally, the default printer is used or the value of the environment variable PRINTER. */
   bool qflag;     /* Queue the print job but do not start the spooling daemom. */
   bool rflag;     /* Remove the file ipon completion of spooling or upon completion of printing (with -s option). */
   bool Rflag;     /* Writes a message to stdout containing the unique number which is used to identify this job. */
   bool sflag;     /* Use symlinks. Usually files are copied to the spool directory. */
   bool tflag;     /* The files are assumed to contain data from troff(1) (cat phototypesetter commands). */
+  char pad[1];
 };
 
 /* job_file_ll protos */
