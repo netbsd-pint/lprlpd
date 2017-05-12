@@ -1,10 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <semaphore.h>
 #include "printqueue.h"
-#include "../common/common.h"
-#include "../common/print_job.h"
-
 
 void *manageQueue(void* queue);
 
@@ -13,7 +11,6 @@ static struct queueVector queueList;
 struct queueManager* findQueue(char* queueName){
   struct queueManager *current;
   int anchor = 0;
-
   for(int i = 0; i<queueList.size; i++){
     current = &queueList.queues[i];
       for(int j = 0; j < (int) strlen(current->name); j++){
@@ -57,7 +54,7 @@ int addElement(struct job *input){
     if(queue->size == 0){
         queue->head = current;
         queue->tail = current;
-        pthread_mutex_unlock(queue->sleep);
+        sem_post(queue->test);
     }else{
         current->previous = NULL;
         queue->tail->previous = current;
@@ -115,6 +112,7 @@ int queueEdit(struct job *data){
 void queueInit(void){
     const char *printcapdb[2] = {"/etc/printcap", 0};
     int i;
+    int lastName =0;
     char* printcap_buffer;
     queueList.size = 0;
     queueList.queues = malloc(sizeof(struct queueManager)*2);
@@ -135,23 +133,30 @@ void queueInit(void){
             queueList.length *= 2;
         }
         for(int j = 0; j < (int) strlen(printcap_buffer);j++){
-            // extract the name of the printer.
+            if(printcap_buffer[j] == '|'){
+                lastName = j;
+            }
             if(printcap_buffer[j] == ':'){
-                printcap_buffer[j] ='\0';
+                printcap_buffer[lastName] ='\0';
                 queueList.queues[queueList.size].name = strdup(printcap_buffer);
-                printcap_buffer[j] = ':';
+                printcap_buffer[lastName] = '|';
 
                 //TODO: check this call.
                 queueList.queues[queueList.size].lock = malloc(sizeof(pthread_mutex_t));
-                queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
+            //    queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
+                  queueList.queues[queueList.size].test = malloc(sizeof(sem_t));
                 pthread_mutex_init(queueList.queues[queueList.size].lock, NULL);
-                pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
+            //    pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
+                sem_init(queueList.queues[queueList.size].test,0,0);
                 queueList.size++;
+
+
                 break;
             }
         }
         //TODO: fix the memory leak here. cgetnext/first malloc a buffer for the string.
-        //free(printcap_buffer);
+        // I think it's fixed?
+        free(printcap_buffer);
     }while((i =cgetnext(&printcap_buffer, printcapdb)) == 1);
     // right here I should go search and populate the threads.
     // Start the baby sitting of the threads
@@ -164,6 +169,8 @@ void queueInit(void){
     }
 
     // TODO: rebuild the queue right here.
+
+
 }
 
 //Prints out all of the queue names.
@@ -179,18 +186,19 @@ void *manageQueue(void* ptr){
     struct queueManager *queue = ptr;
     struct queueElement *current;
     printf("managing queue:%s\n",queue->name);
-    pthread_mutex_lock(queue->sleep);
+    //pthread_mutex_lock(queue->sleep);
     while(1){
         if(queue->size == 0){
             printf("Nothing in  queue:%s, going to sleep\n",queue->name);
-            pthread_mutex_lock(queue->sleep);
+        //    pthread_mutex_lock(queue->sleep);
+            sem_wait(queue->test);
         }
 
-        pthread_mutex_lock(queue->lock);
+        //pthread_mutex_lock(queue->lock);
         current = pop(queue);
         printf("I woke up, and now I'm doing a job for %s",current->data->username);
         //clean up
-        pthread_mutex_unlock(queue->lock);
+        //pthread_mutex_unlock(queue->lock);
 
     }
 

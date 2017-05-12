@@ -3,8 +3,9 @@
 #include<string.h>
 #include<unistd.h>
 #include<fcntl.h>
-#include "threadpool.h"
 #include<pthread.h>
+#include<semaphore.h>
+#include "threadpool.h"
 
 void add_thread(void);
 int getFileID(void);
@@ -18,7 +19,6 @@ static int fileID = 1;
 static pthread_mutex_t pool_lock;
 
 static int wait = 0;
-static int globalLock = 1;
 
 
 
@@ -31,10 +31,10 @@ int thread_pool_init(void){
     if(threads == NULL){
         return -1;
     }
-    threads->size = STARTING_THREAD_NUM;
+    threads->size = MAX_THREAD_NUM;
     threads->current = 0;
 
-    threads->data = malloc(sizeof(struct server_thread) * STARTING_THREAD_NUM);
+    threads->data = malloc(sizeof(struct server_thread) * MAX_THREAD_NUM);
 
 
     // This is grabbing memory for the thread pool.
@@ -59,18 +59,17 @@ void* worker_thread (void* dataPointer){
 
     //TODO make the structures the thread needs for holding data.
 
-    //Syncing
-    globalLock = 0;
 
     //Everything above this is for setting up the thread.
     while(1){
-        puts("here");
+        puts("going to sleep");
         //Each thread waits until it is unlocked.
-        pthread_mutex_lock(self->lock);
-
+        //pthread_mutex_lock(self->lock);
+        sem_wait(self->test);
+        puts("I woke up");
         // Grabs the FD that was passed in.
         FD = *self->data;
-
+        write(FD,"hello",6);
         // Get the printcap data and setup where you are going to write to.
         // Set up function set
 
@@ -108,6 +107,8 @@ int getFileID(void){
 
 // Finds a free thread, and gives it access to the input data.
 // It then unlocks the thread and returns.
+
+// TODO: put a lock in here.
 int requestJob(int input){
   int i;
   for (i = 0; i < threads->current; i++){
@@ -115,47 +116,57 @@ int requestJob(int input){
       *threads->data[i].working = 1;
 
       *threads->data[i].data = input;
-      pthread_mutex_unlock(threads->data[i].lock);
+      sem_post(threads->data[i].test);
 
       return 0;
     }
 
   }
   add_thread();
-  return -1;
+  return requestJob(input);
 }
 
+// This function is a mess, I need to redo it at some point.
 void add_thread(void){
     puts("Spooling up new thread.");
 
-    struct v_thread *temp;
+    //struct v_thread *temp;
 
     // Doubling the max number of threads
+
     if ((int) threads->size == threads->current){
+        puts("You're have too many concurrent jobs coming in.");
+        /*
         temp = malloc(sizeof(struct server_thread)*threads->size*2);
         threads = memmove(temp, threads, sizeof(struct server_thread)*threads->size);
         threads->size = threads->size*2;
+        puts("doubling size");
+        */
     }
-    globalLock = 1;
+
     int current = threads->current;
 
-    threads->data[current].thread = malloc(sizeof(pthread_t));
-    pthread_create(threads->data[current].thread, NULL, worker_thread, &threads->data[current]);
 
-    threads->data[current].lock = malloc(sizeof(pthread_mutex_t));
-    pthread_mutex_init(threads->data[current].lock, NULL);
-    pthread_mutex_lock(threads->data[current].lock);
+
+    //threads->data[current].lock = malloc(sizeof(pthread_mutex_t));
+    //pthread_mutex_init(threads->data[current].lock, NULL);
+    //pthread_mutex_lock(threads->data[current].lock);
+
+    threads->data[current].test = malloc(sizeof(sem_t));
+    sem_init(threads->data[current].test, 0, 0);
+
 
     threads->data[current].data = malloc(sizeof(int));
     threads->data[current].working = malloc(sizeof(int));
 
     threads->data[current].printer = malloc(sizeof(struct printer));
 
+    threads->data[current].thread = malloc(sizeof(pthread_t));
+    pthread_create(threads->data[current].thread, NULL, worker_thread, &threads->data[current]);
+
     threads->current++;
     // Waiting for the thread to be done.
     // I might want to replace this with a mutex.
-    while (globalLock == 1){
-        puts("a");
-    }
+    //while (globalLock == 1){}
 
 }
