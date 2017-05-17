@@ -8,6 +8,8 @@ void *manageQueue(void* queue);
 
 static struct queueVector queueList;
 
+
+// Given a string name, it finds a queue where one of the names matches input
 struct queueManager* findQueue(char* queueName){
   struct queueManager *current;
   int anchor = 0;
@@ -69,13 +71,14 @@ int addElement(struct job *input){
 
 struct queueElement* pop(struct queueManager *queue){
     struct queueElement *returnValue;
-
+    pthread_mutex_lock(queue->lock);
     if(queue->size == 0){
         return NULL;
     }
     queue->size--;
     returnValue=queue->head;
     queue->head = returnValue->previous;
+    pthread_mutex_unlock(queue->lock);
     return returnValue;
 }
 
@@ -124,7 +127,8 @@ void queueInit(void){
       // ERROR:
       //puts("ERROR:printcap is empty/doesn't exist");
     }
-    do{
+    do{ 
+    
         if(queueList.size == queueList.length){
             if(realloc(queueList.queues,(unsigned long) queueList.length*2*sizeof(struct queueManager)) == NULL){
                 //well shit
@@ -150,7 +154,7 @@ void queueInit(void){
                 sem_init(queueList.queues[queueList.size].test,0,0);
                 queueList.size++;
 
-
+                // TODO: rebuild the queue right here.
                 break;
             }
         }
@@ -168,7 +172,7 @@ void queueInit(void){
 
     }
 
-    // TODO: rebuild the queue right here.
+    
 
 
 }
