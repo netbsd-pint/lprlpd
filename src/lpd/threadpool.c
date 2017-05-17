@@ -6,6 +6,7 @@
 #include<pthread.h>
 #include<semaphore.h>
 #include "threadpool.h"
+#include "printqueue.h"
 
 void add_thread(void);
 int getFileID(void);
@@ -56,7 +57,10 @@ void* worker_thread (void* dataPointer){
     struct server_thread* self = malloc(sizeof(struct server_thread));
     self = memcpy(self, dataPointer, sizeof(struct server_thread));
     //^important v not important
-
+    struct job *temp = malloc(sizeof(struct job)); 
+    struct printer *tempP = malloc(sizeof(struct printer));
+    temp->p = tempP;
+    tempP->name = "lp";
     //TODO make the structures the thread needs for holding data.
 
 
@@ -70,8 +74,10 @@ void* worker_thread (void* dataPointer){
         // Grabs the FD that was passed in.
         FD = *self->data;
         write(FD,"hello",6);
+        addElement(temp);
         // Get the printcap data and setup where you are going to write to.
         // Set up function set
+        
 
         // call bens monitor function.
 
