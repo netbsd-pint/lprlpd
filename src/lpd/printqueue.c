@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <semaphore.h>
+#include <sys/stat.h>
 #include "printqueue.h"
 
 void *manageQueue(void* queue);
@@ -71,6 +72,7 @@ int addElement(struct job *input){
 
 struct queueElement* pop(struct queueManager *queue){
     struct queueElement *returnValue;
+    checkPrintcap(queue);
     pthread_mutex_lock(queue->lock);
     if(queue->size == 0){
         return NULL;
@@ -208,5 +210,24 @@ void *manageQueue(void* ptr){
 
 
     return NULL;
+}
+
+void checkPrintcap(struct queueManager* queue){
+  struct stat sb;
+  puts("checking printcap");
+  if(stat("/etc/printcap", &sb) != 0){
+    //ERROR OUT
+  }
+  if(queue->last_access == sb.st_mtime){
+    return;
+  }
+  pthread_mutex_lock(queue->lock);
+  queue->last_access = sb.st_mtime;
+  // here is where I update the queue;
+  puts("updating the queue");
+  pthread_mutex_unlock(queue->lock);
+  
+  return;
+  
 }
 //write the function that manages the queues.

@@ -3,6 +3,7 @@
 //change this back
 #include<pthread.h>
 #include<semaphore.h>
+#include <sys/stat.h>
 #include "print_job.h"
 
 struct queueElement{
@@ -11,13 +12,15 @@ struct queueElement{
     //char padding[8];
 };
 
+//TODO: check if the queue manager needs data/settings from the printcap as well
 struct queueManager{
     struct queueElement *head;
     struct queueElement *tail;
     pthread_mutex_t *lock;
     //pthread_mutex_t *sleep;
     sem_t *test;
-    char* name;
+    char* name;  
+    time_t last_access;
     int size;
     char padding[4];
 };
@@ -43,5 +46,5 @@ void needManagers(void);
 // stuff added for testing
 void checkQueue(void);
 struct queueManager* findQueue(char* queueName);
-
+void checkPrintcap(struct queueManager* queue);
 #endif
