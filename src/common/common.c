@@ -76,7 +76,9 @@ getprintcap (struct printer *printer) {
   //const char *dp;
   const char *printcapdb[2] = {PATH_PRINTCAP, 0};
   int i;
-  char *line;
+  long j;
+  char *line = NULL;
+  int temp;
   char *printcap_buffer;
 
   //printf("%s","hey");
@@ -98,7 +100,8 @@ getprintcap (struct printer *printer) {
   /*lp|brother:\
         :lp=:sh:sd=/var/spool/lpd/lp:\
         rm=140.160.139.120:\
-        lf=/var/log/lpd-errs:mx#0:
+        lf=/var/log/lpd-errs:mx#0:\
+        :ip=1:
 
   #lp|local line printer:\
   #       :sh:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
@@ -121,9 +124,20 @@ getprintcap (struct printer *printer) {
   printer->remote_host = cgetstr(printcap_buffer, "rm", &line) == -1 ? NULL : line;
   printer->log_file = cgetstr(printcap_buffer, "lf", &line) == -1 ? strdup (PATH_CONSOLE) : line;
   printer->restr_group = cgetstr(printcap_buffer, "rg", &line) == -1 ? NULL : line;
-  /* TODO add in the check for lpr/ipp */
-  if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0)
+  cgetstr(printcap_buffer, "pt", &line);
+  if (!line) {
+    printer->proto = lp;
+  } else {
+    if (strcmp("ip", line) == 0) {
+      printer->proto = ip;
+    } else {
+      printer->proto = lp;
+    }
+  }
+
+  if (cgetnum(printcap_buffer, "mx", &printer->max_file_size) < 0) {
     printer->max_file_size = DEFMX;
+  }
   printer->mult_copies = (cgetcap(printcap_buffer, "sc", ':') != NULL);
 
   /* TODO: add in check remote.

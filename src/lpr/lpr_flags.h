@@ -1,3 +1,4 @@
+
 /* Header file for lpr protocol and cli structures */
 /* needs a job number field */
 
@@ -22,7 +23,7 @@ struct lpr_flags {
   struct job_file_ll *files; /* A linked list of files with mimes for the print job */
   char *font;     /* Specifies a font to be mounted on font position i. */
   char *Cflag;    /* A c string: Job classification to use on the burst page. */
-  char *Pflag;     /* Force output to a specific printer. Normally, the default printer is used or the value of the environment variable PRINTER. */
+  char *Pflag;    /* Force output to a specific printer. Normally, the default printer is used or the value of the environment variable PRINTER. */
   int iflag;      /* the output is indented by numcols. */
   int copies;     /* How many copies to print. */
   int fontnum;    /* Number of font, I don't really understand this */

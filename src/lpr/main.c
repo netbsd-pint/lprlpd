@@ -239,8 +239,7 @@ print_printcap_flags(struct printer *printer)
 
     if(printer->local_printer[0] == '\0'){
       printf("Local Printer: Null\n");
-    }
-    else{
+    } else {
       printf("Local Printer: %s\n", printer->local_printer);
     }
     printf("Is it a remote printer?: %s\n", printer->remote_printer);
@@ -249,6 +248,7 @@ print_printcap_flags(struct printer *printer)
     printf("File Status: %s\n", printer->status_file);
     printf("remote printer host?: %s\n", printer->remote_host);
     printf("Log file set: %s\n", printer->log_file);
+    printf("Selected protocol: %s\n", (printer->proto == 0) ? "lp" : "ip");
 }
 
 /* Entry point of the lpr command line utility
@@ -285,17 +285,17 @@ main (int argc, char **argv)
   }
 
   /* try to get a printer or die trying */
-  if(flags->Pflag != NULL){
+  if (flags->Pflag != NULL){
     printername = flags->Pflag;
-    printf("Printer name: %s\n", printername);
-  }
-  else{
+  } else {
     printername = getenv ("PRINTER");
   }
+
   if (!printername) {
-    printername = strdup("lp");
+    printername = strdup ("lp");
     printf ("No printer set in PRINTER environment variable... Defaulting to 'lp'.\n");
   }
+  printf("Printer name: %s\n", printername);
   printcap = new_printer (printername);
 
   /* Attempt to load printer configuration data from printcap */
@@ -306,35 +306,30 @@ main (int argc, char **argv)
     exit (1);
   }
   /* testing purposes */
-  print_printcap_flags(printcap);
-
-
-
-
+  print_printcap_flags (printcap);
 
   /* TODO: Use the printcap and flags to build a job for the appropriate proto
 
+  //email & jobname & extra can all be NULL. The rest have to be all be set.
+  struct job {
+  char **file_names;
+  char **mime_types;
 
-        //email & jobname & extra can all be NULL. The rest have to be all be set.
-      struct job {
-      char **file_names;
-      char **mime_types;
+  char *email;
+  char *username;
+  char *hostname;
+  char *job_id;   //random number (has to be a number in ascii text)
+  char *job_name;
 
-      char *email;
-      char *username;
-      char *hostname;
-      char *job_id;   //random number (has to be a number in ascii text)
-      char *job_name;
+  struct printer* p;
 
-      struct printer* p;
+  void *extra;   // Contains extra data depends on mimetype
 
-      void *extra;   // Contains extra data depends on mimetype
+  size_t copies;
 
-      size_t copies;
-
-      bool burst_page;
-      };
-    */
+  bool burst_page;
+  };
+  */
 
   return 0;
 }
