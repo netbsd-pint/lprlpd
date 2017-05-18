@@ -1,7 +1,9 @@
 #ifndef PRINTQUEUE_H
 #define PRINTQUEUE_H
 //change this back
-
+#include<pthread.h>
+#include<semaphore.h>
+#include <sys/stat.h>
 #include "print_job.h"
 
 struct queueElement{
@@ -10,13 +12,17 @@ struct queueElement{
     //char padding[8];
 };
 
+//TODO: check if the queue manager needs data/settings from the printcap as well
 struct queueManager{
-    int size;
-    char padding3[4];
     struct queueElement *head;
-    //char padding2[8];
     struct queueElement *tail;
-    char* name;
+    pthread_mutex_t *lock;
+    //pthread_mutex_t *sleep;
+    sem_t *test;
+    char* name;  
+    time_t last_access;
+    int size;
+    char padding[4];
 };
 
 struct queueVector{
@@ -30,15 +36,15 @@ struct queueVector{
 struct queueElement* pop(struct queueManager *queue);
 int addElement(struct job *input);
 
-void queueEdit(struct queueManager* queue, int index);
+int queueEdit(struct job *data);
 void queueInit(void);
 
 
 void babysitQueue(void);
 void needManagers(void);
 
-// stuff added for testing 
+// stuff added for testing
 void checkQueue(void);
 struct queueManager* findQueue(char* queueName);
-
+void checkPrintcap(struct queueManager* queue);
 #endif

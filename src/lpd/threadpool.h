@@ -2,10 +2,11 @@
 #define THREADPOOL_H
 
 #include <pthread.h>
+#include <semaphore.h>
 #include "common.h"
 
 #define MAX_THREAD_NUM 16
-#define STARTING_THREAD_NUM 4
+#define STARTING_THREAD_NUM 0
 #define THREAD_NUM 4
 #define FILENAME_MAXLENGTH 32
 // I need a condition variable for thread avail ablity.
@@ -28,7 +29,8 @@ struct v_thread{
 };
 struct server_thread{
     pthread_t *thread;
-    pthread_mutex_t *lock;
+//    pthread_mutex_t *lock;
+    sem_t *test;
     struct printer_st *printer;
     int *data;
     int *working;
