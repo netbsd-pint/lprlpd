@@ -126,11 +126,52 @@ struct ipp_wire_header {
   /* 4 Bytes: Request ID */
   int32_t request_id;
 
-  /* Fields below this line are not transmitted across the wire */
+  /* The tags that are sent */
+  char *tags;
+
+  /*
+   * Fields below this line are not transmitted across the wire,
+   * but are used internally
+   */
   size_t tags_used;
   size_t tags_size;
+};
 
-  char *tags;
+struct ipp_tag_values {
+  enum ipp_tag object_type;
+  enum ipp_tag tag_type;
+
+  char *name;
+
+  union {
+    int8_t int8;
+    int16_t int16;
+    int32_t int32;
+    char *text;
+  } value;
+
+  /* Some tags hold 2 values */
+  union {
+    int8_t int8;
+    int16_t int16;
+    int32_t int32;
+    char *text;
+  } value2;
+
+  /* And a couple hold 3 */
+  union {
+    int8_t int8;
+    int16_t int16;
+    int32_t int32;
+    char *text;
+  } value3;
+
+  /*
+   * Many just get grouped together by not setting the name field
+   * again. These are available with next_value */
+  struct ipp_tag_values *next_value;
+
+  struct ipp_tag_values *next_node;
 };
 
 /* struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id); */
