@@ -39,8 +39,14 @@ void get_address_port(const char *port_at_host, const char *default_port,
 
   if (at)  {
     len = at - port_at_host + 1;
-    *port = (char *)malloc(len);
-    (void)strlcpy(*port, port_at_host, len);
+
+    if (len > 1) {
+      *port = (char *)malloc(len);
+      (void)strlcpy(*port, port_at_host, len);
+    }
+    else { /* @ with nothing in front - use default*/
+      *port = strdup(default_port);
+    }
 
     len = strlen(port_at_host) - (at - port_at_host) + 1;
     *host = (char *)malloc(len);
