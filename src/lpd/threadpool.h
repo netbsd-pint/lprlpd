@@ -14,7 +14,7 @@
 int thread_pool_init(void);
 int job_request(void* data); //I don't know what structure will go in
 int return_thread(pthread_t* worker);
-int getID(void);
+int getJobID(void);
 void* worker_thread(void* data_pointer);
 int requestJob(int input);
 
