@@ -4,6 +4,7 @@
 #include <semaphore.h>
 #include <sys/stat.h>
 #include "printqueue.h"
+#include "common.h"
 
 void *manageQueue(void* queue);
 
@@ -57,13 +58,13 @@ int addElement(struct job *input){
     if(queue->size == 0){
         queue->head = current;
         queue->tail = current;
-        sem_post(queue->test);
+
     }else{
         current->previous = NULL;
         queue->tail->previous = current;
         queue->tail = current;
     }
-
+    sem_post(queue->test);
     queue->size++;
     pthread_mutex_unlock(queue->lock);
     return 0;
@@ -117,8 +118,9 @@ int queueEdit(struct job *data){
 void queueInit(void){
     const char *printcapdb[2] = {"/etc/printcap", 0};
     int i;
-    int lastName =0;
+    bool dupFlag = false;
     char* printcap_buffer;
+    char* line;
     queueList.size = 0;
     queueList.queues = malloc(sizeof(struct queueManager)*2);
     queueList.length = 2;
@@ -129,8 +131,8 @@ void queueInit(void){
       // ERROR:
       //puts("ERROR:printcap is empty/doesn't exist");
     }
-    do{ 
-    
+    do{
+
         if(queueList.size == queueList.length){
             if(realloc(queueList.queues,(unsigned long) queueList.length*2*sizeof(struct queueManager)) == NULL){
                 //well shit
@@ -138,28 +140,29 @@ void queueInit(void){
             }
             queueList.length *= 2;
         }
-        for(int j = 0; j < (int) strlen(printcap_buffer);j++){
-            if(printcap_buffer[j] == '|'){
-                lastName = j;
-            }
-            if(printcap_buffer[j] == ':'){
-                printcap_buffer[lastName] ='\0';
-                queueList.queues[queueList.size].name = strdup(printcap_buffer);
-                printcap_buffer[lastName] = '|';
 
-                //TODO: check this call.
-                queueList.queues[queueList.size].lock = malloc(sizeof(pthread_mutex_t));
-            //    queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
-                  queueList.queues[queueList.size].test = malloc(sizeof(sem_t));
-                pthread_mutex_init(queueList.queues[queueList.size].lock, NULL);
-            //    pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
-                sem_init(queueList.queues[queueList.size].test,0,0);
-                queueList.size++;
-
-                // TODO: rebuild the queue right here.
+        queueList.queues[queueList.size].name = cgetstr(printcap_buffer, "sd", &line) == -1 ? strdup (PATH_DEFSPOOL) : line;
+        //TODO: check this call.
+        dupFlag = false;
+        for(i = 0; i< queueList.size;i++){
+            if(strcmp(queueList.queues[queueList.size].name,queueList.queues[i].name) == 0){
+                free(queueList.queues[queueList.size].name);
+                puts("duplicate printer name");
+                dupFlag = true;
                 break;
             }
         }
+        if(dupFlag){
+            continue;
+        }
+        queueList.queues[queueList.size].lock = malloc(sizeof(pthread_mutex_t));
+    //    queueList.queues[queueList.size].sleep = malloc(sizeof(pthread_mutex_t));
+          queueList.queues[queueList.size].test = malloc(sizeof(sem_t));
+        pthread_mutex_init(queueList.queues[queueList.size].lock, NULL);
+    //    pthread_mutex_init(queueList.queues[queueList.size].sleep, NULL);
+        sem_init(queueList.queues[queueList.size].test,0,0);
+        queueList.size++;
+
         //TODO: fix the memory leak here. cgetnext/first malloc a buffer for the string.
         // I think it's fixed?
         free(printcap_buffer);
@@ -174,7 +177,7 @@ void queueInit(void){
 
     }
 
-    
+
 
 
 }
@@ -197,8 +200,9 @@ void *manageQueue(void* ptr){
         if(queue->size == 0){
             printf("Nothing in  queue:%s, going to sleep\n",queue->name);
         //    pthread_mutex_lock(queue->sleep);
-            sem_wait(queue->test);
+
         }
+        sem_wait(queue->test);
 
         //pthread_mutex_lock(queue->lock);
         current = pop(queue);
@@ -226,8 +230,8 @@ void checkPrintcap(struct queueManager* queue){
   // here is where I update the queue;
   puts("updating the queue");
   pthread_mutex_unlock(queue->lock);
-  
+
   return;
-  
+
 }
 //write the function that manages the queues.
