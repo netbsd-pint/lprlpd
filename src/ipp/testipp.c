@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common.h"
@@ -13,11 +14,14 @@ int main(int argc, char **argv) {
   /*   return 1; */
   /* } */
 
-  char *fNames[] = {"/home/mcgrewz/test.txt", 0};
+  char *host = "140.160.139.120";
+  char *port = "631";
+  /* get_address_port("port@host","999", &host, &port); */
+  /* printf("Host: %s\nPort: %s\n", host, port); */
 
-  struct job *j = (struct job*)malloc(sizeof(struct job));
+  srand((unsigned int)time(NULL) * (unsigned int)getpid());
 
-  j->file_names = fNames;
+  ipp_get_attributes(host, port);
   
-  return ipp_print_file(j);
+  return 0;
 }

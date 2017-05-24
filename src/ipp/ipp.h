@@ -8,22 +8,22 @@
 
 /* IPP Operation types */
 enum ipp_op {
-  IPP_OP_PRINT_JOB        = 0x02,
-  IPP_OP_PRINT_URI        = 0x03,
-  IPP_OP_VALIDATE_JOB     = 0x04,
-  IPP_OP_CREATE_JOB       = 0x05,
-  IPP_OP_SEND_DOCUMENT    = 0x06,
-  IPP_OP_SEND_URI         = 0x07,
-  IPP_OP_CANCEL_JOB       = 0x08,
-  IPP_OP_GET_JOB_ATTR     = 0x09,
-  IPP_OP_GET_JOBS         = 0x0a,
-  IPP_OP_GET_PRINTER_ATTR = 0x0b,
-  IPP_OP_HOLD_JOB         = 0x0c,
-  IPP_OP_RELEASE_JOB      = 0x0d,
-  IPP_OP_RESTART_JOB      = 0x0e,
-  IPP_OP_PAUSE_PRINTER    = 0x10,
-  IPP_OP_RESUME_PRINTER   = 0x11,
-  IPP_OP_PURGE_JOBS       = 0x12
+  IPP_OP_PRINT_JOB        = 0x0002,
+  IPP_OP_PRINT_URI        = 0x0003,
+  IPP_OP_VALIDATE_JOB     = 0x0004,
+  IPP_OP_CREATE_JOB       = 0x0005,
+  IPP_OP_SEND_DOCUMENT    = 0x0006,
+  IPP_OP_SEND_URI         = 0x0007,
+  IPP_OP_CANCEL_JOB       = 0x0008,
+  IPP_OP_GET_JOB_ATTR     = 0x0009,
+  IPP_OP_GET_JOBS         = 0x000a,
+  IPP_OP_GET_PRINTER_ATTR = 0x000b,
+  IPP_OP_HOLD_JOB         = 0x000c,
+  IPP_OP_RELEASE_JOB      = 0x000d,
+  IPP_OP_RESTART_JOB      = 0x000e,
+  IPP_OP_PAUSE_PRINTER    = 0x0010,
+  IPP_OP_RESUME_PRINTER   = 0x0011,
+  IPP_OP_PURGE_JOBS       = 0x0012
 };
 
 /* IPP Tags from RFC 2910 */
@@ -50,8 +50,10 @@ enum ipp_tag {
   IPP_TAG_DATETIME          = 0x31,
   IPP_TAG_RESOLUTION        = 0x32,
   IPP_TAG_INT_RANGE         = 0x33,
+  IPP_TAG_BEGIN_COLLECTION  = 0x34,
   IPP_TAG_TEXT_WITH_LANG    = 0x35,
   IPP_TAG_NAME_WITH_LANG    = 0x36,
+  IPP_TAG_END_COLLECTION    = 0x37,
 
   /* Character String Value Tags */
   IPP_TAG_TEXT_WITHOUT_LANG = 0x41,
@@ -61,7 +63,8 @@ enum ipp_tag {
   IPP_TAG_URI_SCHEME        = 0x46,
   IPP_TAG_CHARSET           = 0x47,
   IPP_TAG_NATURAL_LANGUAGE  = 0x48,
-  IPP_TAG_MIME_TYPE         = 0x49
+  IPP_TAG_MIME_TYPE         = 0x49,
+  IPP_TAG_MEMB_ATTR_NAME    = 0x4a
 };
 
 /* IPP Status Codes */
@@ -130,17 +133,17 @@ struct ipp_wire_header {
   char *tags;
 };
 
-struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id);
-void ipp_free_wire_header(struct ipp_wire_header *header);
-bool ipp_wire_header_add_tag(struct ipp_wire_header *header, const char tag,
-                        const char *tag_name, const char *tag_val);
-char* ipp_mk_http_request(const char *address, const char *port,
-                          const char * ipp_path, const struct ipp_wire_header *header,
-                          const size_t file_len, size_t *http_req_len);
-bool ipp_parse_headers(char *headers, const size_t headers_len,
-                       struct ipp_wire_header *ipp_msg, size_t *file_len);
+/* struct ipp_wire_header *ipp_mk_wire_header(int16_t op_stat, int32_t request_id); */
+/* void ipp_free_wire_header(struct ipp_wire_header *header); */
+/* bool ipp_wire_header_add_tag(struct ipp_wire_header *header, const char tag, */
+/*                         const char *tag_name, const char *tag_val); */
+/* char* ipp_mk_http_request(const char *address, const char *port, */
+/*                           const char * ipp_path, const struct ipp_wire_header *header, */
+/*                           const size_t file_len, size_t *http_req_len); */
+/* bool ipp_parse_headers(char *headers, const size_t header_len, */
+/*                        struct ipp_wire_header *ipp_msg, size_t *file_len); */
 void ipp_test_print(int sockfd, const char *text_file);
-void ipp_get_attributes(int sockfd);
+void ipp_get_attributes(const char *host, const char *port);
 
 /* Generic Printer API Calls */
 struct job_stat* ipp_job_stats(const struct job *j);
