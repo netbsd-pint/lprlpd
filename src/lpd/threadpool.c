@@ -59,7 +59,7 @@ void* worker_thread (void* dataPointer){
     struct job *temp = malloc(sizeof(struct job)); 
     struct printer *tempP = malloc(sizeof(struct printer));
     temp->p = tempP;
-    tempP->name = "/var/spool/lpd/lp";
+    tempP->name = "/var/spool/pd/lp";
     //TODO make the structures the thread needs for holding data.
 
 
@@ -69,7 +69,6 @@ void* worker_thread (void* dataPointer){
         //Each thread waits until it is unlocked.
         //pthread_mutex_lock(self->lock);
         getJobID();
-        sem_wait(self->test);
         sem_wait(self->test);
         puts("I woke up");
         // Grabs the FD that was passed in.
@@ -113,10 +112,10 @@ int getJobID(void){
   read(FD,input,9);
   input[9]=0;
   JID = atoi(input);
-  printf("ID is %d, setting new JID to %d", JID, JID +1);
+  printf("ID is %d, setting new JID to %d\n", JID, JID +1);
   lseek(FD,0,SEEK_SET);
   dprintf(FD, "%d", JID+1);
-  
+  close(FD);
   return JID;
   
   

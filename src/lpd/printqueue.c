@@ -52,7 +52,9 @@ struct queueManager* findQueue(char* queueName){
 int addElement(struct job *input){
 
     struct queueManager *queue = findQueue(input->p->name);
-
+    if(queue == NULL){
+      return -1;
+    }
     struct queueElement *current = malloc(sizeof(struct queueElement));
     pthread_mutex_lock(queue->lock);
     current->data = input;
