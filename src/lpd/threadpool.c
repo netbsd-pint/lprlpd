@@ -10,13 +10,12 @@
 
 void add_thread(void);
 int getFileID(void);
-
+int getID(void);
 
 static struct v_thread* threads;
 
 static int init = 0;
 static int ID = 0;
-static int fileID = 1;
 static pthread_mutex_t pool_lock;
 
 static int wait = 0;
@@ -60,7 +59,7 @@ void* worker_thread (void* dataPointer){
     struct job *temp = malloc(sizeof(struct job)); 
     struct printer *tempP = malloc(sizeof(struct printer));
     temp->p = tempP;
-    tempP->name = "lp";
+    tempP->name = "/var/spool/lpd/lp";
     //TODO make the structures the thread needs for holding data.
 
 
@@ -69,6 +68,8 @@ void* worker_thread (void* dataPointer){
         puts("going to sleep");
         //Each thread waits until it is unlocked.
         //pthread_mutex_lock(self->lock);
+        getJobID();
+        sem_wait(self->test);
         sem_wait(self->test);
         puts("I woke up");
         // Grabs the FD that was passed in.
@@ -101,14 +102,25 @@ int getID(void){
     return returnValue;
 }
 
-
-int getFileID(void){
-    int returnValue;
-    pthread_mutex_lock(&pool_lock);
-    returnValue = fileID;
-    fileID++;
-    pthread_mutex_unlock(&pool_lock);
-    return returnValue;
+int getJobID(void){
+  int FD = open("job",O_RDWR|O_EXLOCK);
+  if(FD <0){
+    // error out here.
+    puts("file not found");
+  }
+  char input[10];
+  int JID = 0;
+  read(FD,input,9);
+  input[9]=0;
+  JID = atoi(input);
+  printf("ID is %d, setting new JID to %d", JID, JID +1);
+  lseek(FD,0,SEEK_SET);
+  dprintf(FD, "%d", JID+1);
+  
+  return JID;
+  
+  
+  
 }
 
 // Finds a free thread, and gives it access to the input data.

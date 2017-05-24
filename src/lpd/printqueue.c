@@ -15,11 +15,13 @@ static struct queueVector queueList;
 struct queueManager* findQueue(char* queueName){
   struct queueManager *current;
   int anchor = 0;
+  printf("looking for the queue %s\n",queueName);
   for(int i = 0; i<queueList.size; i++){
     current = &queueList.queues[i];
       for(int j = 0; j < (int) strlen(current->name); j++){
         if(current->name[j] == '|'){
           current->name[j] = 0;
+          puts(current->name);
           if(strcmp(queueName,&current->name[anchor]) == 0){
             current->name[j] = '|';
             puts(&current->name[anchor]);
@@ -177,7 +179,7 @@ void queueInit(void){
 
     }
 
-
+  printf("The queue list is %d long\n",queueList.size);
 
 
 }
