@@ -35,8 +35,6 @@ int thread_pool_init(void){
     threads->current = 0;
 
     threads->data = malloc(sizeof(struct server_thread) * MAX_THREAD_NUM);
-
-
     // This is grabbing memory for the thread pool.
 
     pthread_mutex_init(&pool_lock, NULL);
@@ -56,7 +54,7 @@ void* worker_thread (void* dataPointer){
     struct server_thread* self = malloc(sizeof(struct server_thread));
     self = memcpy(self, dataPointer, sizeof(struct server_thread));
     //^important v not important
-    struct job *temp = malloc(sizeof(struct job)); 
+    struct job *temp = malloc(sizeof(struct job));
     struct printer *tempP = malloc(sizeof(struct printer));
     temp->p = tempP;
     tempP->name = "/var/spool/pd/lp";
@@ -77,7 +75,7 @@ void* worker_thread (void* dataPointer){
         addElement(temp);
         // Get the printcap data and setup where you are going to write to.
         // Set up function set
-        
+
 
         // call bens monitor function.
 
@@ -102,7 +100,7 @@ int getID(void){
 }
 
 int getJobID(void){
-  int FD = open("job",O_RDWR|O_EXLOCK);
+  int FD = open("/var/spool/job",O_RDWR|O_EXLOCK);
   if(FD <0){
     // error out here.
     puts("file not found");
@@ -117,9 +115,9 @@ int getJobID(void){
   dprintf(FD, "%d", JID+1);
   close(FD);
   return JID;
-  
-  
-  
+
+
+
 }
 
 // Finds a free thread, and gives it access to the input data.
