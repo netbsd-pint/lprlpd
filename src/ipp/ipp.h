@@ -143,6 +143,7 @@ struct ipp_tag_values {
 
   char *name;
 
+  /* Most tags hold 1 value */
   union {
     int8_t int8;
     int16_t int16;
@@ -150,25 +151,20 @@ struct ipp_tag_values {
     char *text;
   } value;
 
-  /* Some tags hold 2 values */
+  /* Some tags hold *exactly* 2 values, where the second is *usually*
+     a 32-bit integer, but sometimes it's text */
   union {
-    int8_t int8;
-    int16_t int16;
     int32_t int32;
     char *text;
   } value2;
 
-  /* And a couple hold 3 */
-  union {
-    int8_t int8;
-    int16_t int16;
-    int32_t int32;
-    char *text;
-  } value3;
+  /* And a one holds *exactly* 3 values, which needs 8 bits*/
+  int8_t value3;
 
   /*
    * Many just get grouped together by not setting the name field
-   * again. These are available with next_value */
+   * again. These are available with next_value
+   */
   struct ipp_tag_values *next_value;
 
   struct ipp_tag_values *next_node;
