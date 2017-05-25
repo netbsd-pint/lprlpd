@@ -29,6 +29,35 @@ void setupprotocol (void) {
   */
 }
 
+/* Read the port@host format from the printcap and break into two
+   strings */
+void get_address_port(const char *port_at_host, const char *default_port,
+                     char **host, char **port) {
+
+  char *at = strchr(port_at_host, '@');
+  size_t len;
+
+  if (at)  {
+    len = at - port_at_host + 1;
+
+    if (len > 1) {
+      *port = (char *)malloc(len);
+      (void)strlcpy(*port, port_at_host, len);
+    }
+    else { /* @ with nothing in front - use default*/
+      *port = strdup(default_port);
+    }
+
+    len = strlen(port_at_host) - (at - port_at_host) + 1;
+    *host = (char *)malloc(len);
+    (void)strlcpy(*host, port_at_host + (at - port_at_host) + 1, len);
+  }
+  else {
+    *host = strdup(port_at_host);
+    *port = strdup(default_port);
+  }
+}
+
 int get_connection(const char *address, const char *port) {
   int fd = -1;
   int error;
