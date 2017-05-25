@@ -1,7 +1,9 @@
 /*
  */
 
+#include <fcntl.h>
 #include <magic.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,17 +11,19 @@
 #include <unistd.h>
 
 #include "lpr_flags.h"
-#include "../common/printer.h"
 #include "../common/common.h"
+#include "../common/printer.h"
+#include "../ipp/ipp.h"
 
-static int usage (void);
-static char * get_mime_type (char *file);
+static void usage (void) __attribute__ ((noreturn));
 static void file_from_stdin ();
+static int create_job_id (void);
+static char * get_mime_type (char *file);
 static struct lpr_flags * parse_commandline (int argc, char **argv);
 static int verify_lpr_flags (struct lpr_flags *f);
 static void print_lpr_flags (struct lpr_flags *f);
 
-static int
+static void
 usage(void)
 {
   fprintf(stderr,
@@ -27,39 +31,7 @@ usage(void)
           "[-U user]\n"
           "%s [-i[numcols]] [-1234 font] [-wnum] [-cdfghlmnopqRrstv] "
           "[filename ...]\n", getprogname(), getprogname());
-  return 1;
-}
-
-static char *
-get_mime_type (char *file) {
-  char *mime = NULL;
-  size_t mime_len = 0;
-  const char *magic_full = NULL;
-  magic_t magic_cookie = magic_open(MAGIC_MIME);
-
-  if (magic_cookie == NULL) {
-    printf ("unable to initialize magic library.\n");
-    exit (1);
-  }
-
-  if (magic_load(magic_cookie, NULL) != 0) {
-    printf ("cannot load magic database - %s\n", magic_error(magic_cookie));
-    magic_close (magic_cookie);
-    exit (1);
-  }
-
-  magic_full = magic_file (magic_cookie, file);
-  mime_len = strlen (magic_full) + 1;
-  mime = (char*) malloc (mime_len);
-  if (!mime) {
-    printf ("Failed to malloc in get_mime_type.\n");
-    exit (1);
-  }
-
-  (void) strlcpy (mime, magic_full, mime_len + 1);
-  magic_close (magic_cookie);
-
-  return mime;
+  exit (1);
 }
 
 static void
@@ -83,6 +55,56 @@ file_from_stdin (char *template)
   }
 }
 
+int
+create_job_id (void) {
+  int FD = open ("/var/spool/job", O_RDWR|O_EXLOCK);
+  if (FD < 0) {
+    // error out here.
+    printf ("Job id file not found.\n");
+    exit (1);
+  }
+  char input[10];
+  int JID = 0;
+  read (FD, input, 9);
+  input[9] = 0;
+  JID = atoi (input);
+  printf ("ID is %d, setting new JID to %d\n", JID, JID + 1);
+  lseek (FD, 0, SEEK_SET);
+  dprintf (FD, "%d", JID + 1);
+  close (FD);
+  return JID;
+}
+
+static char *
+get_mime_type (char *file) {
+  char *mime = NULL;
+  size_t mime_len = 0;
+  const char *magic_full = NULL;
+  magic_t magic_cookie = magic_open (MAGIC_MIME);
+
+  /* Attempt to setup the file magic database */
+  if (magic_cookie == NULL) {
+    printf ("unable to initialize magic library.\n");
+    exit (1);
+  } else if (magic_load(magic_cookie, NULL) != 0) {
+    printf ("cannot load magic database - %s\n", magic_error(magic_cookie));
+    magic_close (magic_cookie);
+    exit (1);
+  } else {
+    magic_full = magic_file (magic_cookie, file);
+    mime_len = strlen (magic_full) + 1;
+    mime = (char*) malloc (mime_len);
+    if (!mime) {
+      printf ("Failed to malloc in get_mime_type.\n");
+      exit (1);
+    }
+    (void) strlcpy (mime, magic_full, mime_len + 1);
+    magic_close (magic_cookie);
+  }
+
+  return mime;
+}
+
 static struct lpr_flags *
 parse_commandline (int argc, char **argv)
 {
@@ -94,11 +116,6 @@ parse_commandline (int argc, char **argv)
   char ch[2] = {0};
   int tmp = optind;
   bool read_stdin = false;
-
-  if (!f) {
-    printf ("Failed to malloc in parse_commandline.\n");
-    exit (1);
-  }
 
   while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:P:cdfghlmnopqrRstv")) != -1) {
     switch (ch[0]) {
@@ -153,19 +170,24 @@ parse_commandline (int argc, char **argv)
     case '?':
     default:
       usage ();
-      exit (1);
     } /* end switch */
   } /* end while */
 
   /* Determine if printing from stdin OR files but do not allow both
      because it might cause errors when pipping into lpr.
   */
-  tmp = optind;
-  while (tmp < argc) {
-    if (strcmp ("-", argv[tmp]) == 0) {
-      read_stdin = true;
+  /* TODO: Fix this to detect when no '-' is given without screwing up the rest of filename parsing... */
+  if (argv[optind] == 0) {
+    read_stdin = true;
+  }
+  else {
+    tmp = optind;
+    while (tmp < argc) {
+      if (strcmp ("-", argv[tmp]) == 0) {
+        read_stdin = true;
+      }
+      tmp++;
     }
-    tmp++;
   }
 
   f->file_names = (char**) calloc (sizeof (char*), 2);
@@ -175,7 +197,8 @@ parse_commandline (int argc, char **argv)
     exit (1);
   }
 
-  if (read_stdin) { /* Just print the input from stdin */
+  /* Just print the input from stdin */
+  if (read_stdin) {
     file_from_stdin (template);
     f->file_names[0] = (char*) calloc (sizeof (char), 17);
     if (!f->file_names[0]) {
@@ -186,16 +209,17 @@ parse_commandline (int argc, char **argv)
     f->file_names[0] = memcpy (f->file_names[0], template, 17);
     f->mime_types[0] = get_mime_type (template);
   }
-  else { /* Print the files supplied by user */
+  /* Print the files supplied by user */
+  else {
     unsigned long i = 0;
     while (optind < argc) {
-      printf ("FILENAME:\t%s\n", argv[optind]);
+      /* DEBUG: printf ("FILENAME:\t%s\n", argv[optind]); */
       if (access (argv[optind], F_OK) != -1) {
         /* File exists */
         f->file_names = (char**) realloc (f->file_names, sizeof (char*) * (i + 2));
         f->mime_types = (char**) realloc (f->mime_types, sizeof (char*) * (i + 2));
         if (!f->file_names || !f->mime_types) {
-          printf ("Failed to malloc in file collecting loop in pasre_commandline.\n");
+          printf ("Failed to malloc in file collecting loop in parse_commandline.\n");
           exit (1);
         }
         f->file_names[i + 2] = NULL;
@@ -285,13 +309,10 @@ main (int argc, char **argv)
   struct lpr_flags *flags = NULL;
   struct printer *printcap = NULL;
   struct job *print_job = NULL;
-  /*
-    Therefore, in NetBSD, calling setprogname() explicitly has no effect.
-    However, portable programs that wish to use getprogname() should call
-    setprogname() from main(). On operating systems where getprogname() and
-    setprogname() are implemented via a portability library, this call is
-    needed to make the name available.
-  */
+  char *jid = NULL;
+  int jobid = -1;
+  double len = 0;
+
   setprogname (*argv);
   gethostname (hostname, 256);
   userid = (int) getuid ();
@@ -302,7 +323,6 @@ main (int argc, char **argv)
   if (flag_errors > 0) {
     printf ("verify_lpr_flags found %d errors with cli input... exiting.\n", flag_errors);
     usage ();
-    exit (1);
   }
 
   /* try to get a printer or die trying */
@@ -326,7 +346,8 @@ main (int argc, char **argv)
     printf ("Failed to load printcap entry for %s.\n", printcap->name);
     exit (1);
   }
-  /* testing purposes */
+
+  /* DEBUG: testing purposes */
   print_printcap_flags (printcap);
 
   print_job = (struct job*) malloc (sizeof (struct job));
@@ -335,18 +356,36 @@ main (int argc, char **argv)
     exit (1);
   }
 
+  /* Munge data into the print_job structure before shipping off to a protocol */
+  jobid = create_job_id ();
+  len = ceil (log10 (jobid));
+  jid = (char*) calloc (sizeof (char), (unsigned long) len + 1);
+  if (!jid) {
+    printf ("Failed to malloc in lpr:main.\n");
+    exit (1);
+  }
+
   print_job->file_names = flags->file_names;
   print_job->mime_types = flags->mime_types;
   print_job->email = NULL;
-  print_job->username = "";
+  print_job->username = getenv ("USER");
   print_job->hostname = hostname;
-  print_job->job_id = 0;
-  print_job->job_name = "";
+  print_job->job_id = jid;
+  if (flags->Jflag) {
+    print_job->job_name = flags->Jflag;
+  } else {
+    print_job->job_name = print_job->file_names[0];
+  }
   print_job->p = printcap;
   print_job->extra = NULL;
   print_job->copies = flags->copies;
   print_job->burst_page = flags->Jflag;
   print_job->no_start = flags->qflag;
 
-  return 0;
+  /* Ship off print_job to a protocol */
+  /* TODO: make this a conditional? */
+  //int r = ipp_print_file (print_job);
+  //printf ("HOST: %s ipp_print_file result: %d\n", hostname, r);
+
+  exit (0);
 }

@@ -47,7 +47,7 @@ new_lpr_flags (char *username, char *hostname)
 }
 
 void
-delete_lpr_flags (struct lpr_flags *j)
+free_lpr_flags (struct lpr_flags *j)
 {
   free (j->username);
   free (j->hostname);

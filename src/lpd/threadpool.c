@@ -66,7 +66,6 @@ void* worker_thread (void* dataPointer){
         puts("going to sleep");
         //Each thread waits until it is unlocked.
         //pthread_mutex_lock(self->lock);
-        getJobID();
         sem_wait(self->test);
         puts("I woke up");
         // Grabs the FD that was passed in.
@@ -97,27 +96,6 @@ int getID(void){
     pthread_mutex_unlock(&pool_lock);
     wait = 0;
     return returnValue;
-}
-
-int getJobID(void){
-  int FD = open("/var/spool/job",O_RDWR|O_EXLOCK);
-  if(FD <0){
-    // error out here.
-    puts("file not found");
-  }
-  char input[10];
-  int JID = 0;
-  read(FD,input,9);
-  input[9]=0;
-  JID = atoi(input);
-  printf("ID is %d, setting new JID to %d\n", JID, JID +1);
-  lseek(FD,0,SEEK_SET);
-  dprintf(FD, "%d", JID+1);
-  close(FD);
-  return JID;
-
-
-
 }
 
 // Finds a free thread, and gives it access to the input data.
