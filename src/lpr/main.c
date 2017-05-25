@@ -88,7 +88,7 @@ parse_commandline (int argc, char **argv)
 {
   /* TODO: Edit the constants "user1" and "localhost" */
   struct lpr_flags *f = new_lpr_flags ("user1", "localhost");
-  char template[] = "/tmp/lpr.XXXXXXXX";
+  char template[] = "/tmp/lpr.XXXXXXX";
   extern char *optarg;
   extern int optind;
   char ch[2] = {0};
@@ -103,7 +103,11 @@ parse_commandline (int argc, char **argv)
   while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:P:cdfghlmnopqrRstv")) != -1) {
     switch (ch[0]) {
     case '#':
-      f->copies = atoi (optarg);
+      if (atoi (optarg) < 0) {
+        printf ("Cannot specify a negative number of copies to print. Exiting...\n");
+        exit (1);
+      }
+      f->copies = strtoul (optarg, NULL, 10);
       break;
     case '1':
     case '2':
@@ -164,26 +168,44 @@ parse_commandline (int argc, char **argv)
     tmp++;
   }
 
-  if (read_stdin) { /* Just print the input from stdin */
-    file_from_stdin (template);
-    f->files = new_job_file_ll (template, get_mime_type (template));
+  f->file_names = (char**) calloc (sizeof (char*), 2);
+  f->mime_types = (char**) calloc (sizeof (char*), 2);
+  if (!f->file_names || !f->mime_types) {
+    printf ("Failed to malloc in parse_commandline.\n");
+    exit (1);
   }
 
+  if (read_stdin) { /* Just print the input from stdin */
+    file_from_stdin (template);
+    f->file_names[0] = (char*) calloc (sizeof (char), 17);
+    if (!f->file_names[0]) {
+      printf ("Failed to malloc for filename in parse_commandline.\n");
+      exit (1);
+    }
 
-
+    f->file_names[0] = memcpy (f->file_names[0], template, 17);
+    f->mime_types[0] = get_mime_type (template);
+  }
   else { /* Print the files supplied by user */
+    unsigned long i = 0;
     while (optind < argc) {
       printf ("FILENAME:\t%s\n", argv[optind]);
       if (access (argv[optind], F_OK) != -1) {
         /* File exists */
-        if (!f->files) { /* Case for the first file encountered */
-          f->files = new_job_file_ll (argv[optind], get_mime_type (argv[optind]));
-        } else {
-          job_file_ll_append (f->files, new_job_file_ll (argv[optind], get_mime_type (argv[optind])));
+        f->file_names = (char**) realloc (f->file_names, sizeof (char*) * (i + 2));
+        f->mime_types = (char**) realloc (f->mime_types, sizeof (char*) * (i + 2));
+        if (!f->file_names || !f->mime_types) {
+          printf ("Failed to malloc in file collecting loop in pasre_commandline.\n");
+          exit (1);
         }
+        f->file_names[i + 2] = NULL;
+        f->mime_types[i + 2] = NULL;
+        f->file_names[i] = argv[optind];
+        f->mime_types[i] = get_mime_type (argv[optind]);
       } else {
         printf ("lpr: cannot acces %s: No such file or directory\n", argv[optind]);
       }
+      i++;
       optind++;
     }
   }
@@ -199,13 +221,13 @@ verify_lpr_flags (struct lpr_flags *f)
   /* DEBUG */
   print_lpr_flags (f);
 
-  if (!f->files) {
+  if (!f->file_names) {
     printf ("No file(s) specified for print job.\n");
     status++;
   }
 
   if (f->copies <= 0) {
-    printf ("Invalid number of copies specified (%d).\n", f->copies);
+    printf ("Invalid number of copies specified (%zu).\n", f->copies);
     status++;
   }
 
@@ -216,18 +238,17 @@ verify_lpr_flags (struct lpr_flags *f)
 static void
 print_lpr_flags (struct lpr_flags *f)
 {
-  struct job_file_ll *tmp = f->files;
+  int i = 0;
 
   printf ("Printing file(s):\n");
-  while (tmp) {
-    printf ("\t%s -- MIME: %s\n", tmp->filename, tmp->filemime);
-    tmp = tmp->next;
+  while (f->file_names[i]) {
+    printf ("\t%s -- MIME: %s\n", f->file_names[i], f->mime_types[i]);
+    i++;
   }
-
 
   printf ("With options:\n");
   if (f) {
-    printf ("Jflags: %s\nTflag: %s\nUflag: %s\nfont: %s\nCflag: %s\ncopies: %d\nPflag: %s\n",
+    printf ("Jflags: %s\nTflag: %s\nUflag: %s\nfont: %s\nCflag: %s\ncopies: %zu\nPflag: %s\n",
             f->Jflag, f->Tflag, f->Uflag, f->font, f->Cflag, f->copies, f->Pflag);
   }
 
@@ -238,17 +259,17 @@ print_printcap_flags(struct printer *printer)
     //test what was set from reading the printcap file
 
     if(printer->local_printer[0] == '\0'){
-      printf("Local Printer: Null\n");
+      printf ("Local Printer: Null\n");
+    } else {
+      printf ("Local Printer: %s\n", printer->local_printer);
     }
-    else{
-      printf("Local Printer: %s\n", printer->local_printer);
-    }
-    printf("Is it a remote printer?: %s\n", printer->remote_printer);
-    printf("Spooling directory: %s\n", printer->spooling_dir);
-    printf("Lock File?: %s\n",   printer->lock_file);
-    printf("File Status: %s\n", printer->status_file);
-    printf("remote printer host?: %s\n", printer->remote_host);
-    printf("Log file set: %s\n", printer->log_file);
+    printf ("Is it a remote printer?: %s\n", printer->remote_printer);
+    printf ("Spooling directory: %s\n", printer->spooling_dir);
+    printf ("Lock File?: %s\n",   printer->lock_file);
+    printf ("File Status: %s\n", printer->status_file);
+    printf ("remote printer host?: %s\n", printer->remote_host);
+    printf ("Log file set: %s\n", printer->log_file);
+    printf ("Selected protocol: %s\n", (printer->proto == 0) ? "lp" : "ip");
 }
 
 /* Entry point of the lpr command line utility
@@ -263,7 +284,7 @@ main (int argc, char **argv)
   char *printername = NULL;
   struct lpr_flags *flags = NULL;
   struct printer *printcap = NULL;
-
+  struct job *print_job = NULL;
   /*
     Therefore, in NetBSD, calling setprogname() explicitly has no effect.
     However, portable programs that wish to use getprogname() should call
@@ -285,17 +306,17 @@ main (int argc, char **argv)
   }
 
   /* try to get a printer or die trying */
-  if(flags->Pflag != NULL){
+  if (flags->Pflag != NULL){
     printername = flags->Pflag;
-    printf("Printer name: %s\n", printername);
-  }
-  else{
+  } else {
     printername = getenv ("PRINTER");
   }
+
   if (!printername) {
-    printername = strdup("lp");
+    printername = strdup ("lp");
     printf ("No printer set in PRINTER environment variable... Defaulting to 'lp'.\n");
   }
+  printf("Printer name: %s\n", printername);
   printcap = new_printer (printername);
 
   /* Attempt to load printer configuration data from printcap */
@@ -306,35 +327,26 @@ main (int argc, char **argv)
     exit (1);
   }
   /* testing purposes */
-  print_printcap_flags(printcap);
+  print_printcap_flags (printcap);
 
+  print_job = (struct job*) malloc (sizeof (struct job));
+  if (!print_job) {
+    printf ("Failed to malloc struct job in main.\n");
+    exit (1);
+  }
 
-
-
-
-  /* TODO: Use the printcap and flags to build a job for the appropriate proto
-
-
-        //email & jobname & extra can all be NULL. The rest have to be all be set.
-      struct job {
-      char **file_names;
-      char **mime_types;
-
-      char *email;
-      char *username;
-      char *hostname;
-      char *job_id;   //random number (has to be a number in ascii text)
-      char *job_name;
-
-      struct printer* p;
-
-      void *extra;   // Contains extra data depends on mimetype
-
-      size_t copies;
-
-      bool burst_page;
-      };
-    */
+  print_job->file_names = flags->file_names;
+  print_job->mime_types = flags->mime_types;
+  print_job->email = NULL;
+  print_job->username = "";
+  print_job->hostname = hostname;
+  print_job->job_id = 0;
+  print_job->job_name = "";
+  print_job->p = printcap;
+  print_job->extra = NULL;
+  print_job->copies = flags->copies;
+  print_job->burst_page = flags->Jflag;
+  print_job->no_start = flags->qflag;
 
   return 0;
 }

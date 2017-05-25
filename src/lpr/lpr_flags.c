@@ -4,52 +4,6 @@
 
 #include "lpr_flags.h"
 
-struct job_file_ll *
-new_job_file_ll (char *filename, char *filemime)
-{
-  struct job_file_ll *jf = (struct job_file_ll*) malloc (sizeof (struct job_file_ll));
-  size_t fname_len = strlen (filename) + 1;
-
-  if (jf) {
-    jf->filename = (char*) malloc (fname_len);
-    (void) strlcpy (jf->filename, filename, fname_len);
-    jf->filemime = filemime;
-    jf->next = NULL;
-  } else {
-    printf ("Failed to malloc in new_job_file_ll.\n");
-    exit (1);
-  }
-
-  return jf;
-}
-
-void
-free_job_file_ll (struct job_file_ll *jf)
-{
-  struct job_file_ll *tmp = NULL;
-
-  while (jf) {
-    tmp = jf->next;
-    free (jf->filename);
-    free (jf->filemime);
-    free (jf);
-    jf = tmp;
-  }
-}
-
-/* Appends the n to l */
-void
-job_file_ll_append (struct job_file_ll *l, struct job_file_ll *n)
-{
-  struct job_file_ll *tmp = NULL;
-
-  while (l) {
-    tmp = l;
-    l = l->next;
-  }
-  tmp->next = n;
-}
-
 struct lpr_flags *
 new_lpr_flags (char *username, char *hostname)
 {
@@ -61,7 +15,8 @@ new_lpr_flags (char *username, char *hostname)
 
   j->username = username;
   j->hostname = hostname;
-  j->files = NULL;
+  j->file_names = NULL;
+  j->mime_types = NULL;
   j->cflag = false;
   j->dflag = false;
   j->fflag = false;
@@ -96,7 +51,6 @@ delete_lpr_flags (struct lpr_flags *j)
 {
   free (j->username);
   free (j->hostname);
-  free_job_file_ll (j->files);
   free (j->font);
   free (j->Cflag);
   free (j->Jflag);
