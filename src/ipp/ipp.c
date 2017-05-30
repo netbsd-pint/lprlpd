@@ -198,7 +198,7 @@ static char* ipp_mk_http_request(const char *address, const char *port, const ch
   /* Silence the alignment warning */
   tmp32 = (int32_t *) (void *) pos;
   *tmp32 = (int32_t) htonl(header->request_id);
-  
+
   pos += sizeof(int32_t);
 
   memcpy(pos, header->tags, header->tags_used);
@@ -215,14 +215,14 @@ static bool ipp_parse_ipp_header_tags(char *header, const size_t header_len, str
   char *end = header + header_len;
   char *attr;
   char *value;
-  
+
   size_t len;
   size_t count;
   size_t total_count;
 
   int i = 0;
   int inCollection = 0;
-  
+
   int32_t int32_value;
   int16_t int16_value;
   int8_t int8_value;
@@ -237,7 +237,7 @@ static bool ipp_parse_ipp_header_tags(char *header, const size_t header_len, str
   while (next < end) {
     if (*next == IPP_TAG_END_ATTR)
       break;
-    
+
     switch (*next) {
       case IPP_TAG_OPERATION_ATTR:
         ++next;
@@ -307,7 +307,7 @@ static bool ipp_parse_ipp_header_tags(char *header, const size_t header_len, str
     /* TODO: This switch statement needs to be cleaned up */
     /* TODO: There's still some tags I (haven't seen in a packet
        capture) that I don't parse yet -Zach (05/10/2017)*/
-    
+
     switch (*next) {
       case IPP_TAG_UNKNOWN:
         ++next;
@@ -743,7 +743,7 @@ static bool ipp_parse_ipp_header(char *header, const size_t header_len, struct i
 
   status = (int16_t) ntohs(*((uint16_t *) (void *) next));
   next += 2;
-  
+
 
   if (IPP_STATUS_SUCCESS(status))
     printf("Status: SUCCESS");
@@ -772,7 +772,7 @@ static bool ipp_parse_headers(char *headers, const size_t header_len, struct ipp
   char *end = headers + header_len;
   char *next;
   char *match;
-  
+
   unsigned long long content_length = 0;
 
   /* TODO: Actually set the IPP header? */
@@ -816,7 +816,7 @@ int ipp_print_file(const struct job *j) {
 
   char *host = 0;
   char *port = 0;
-  
+
   char **file_name = j->file_names;
 
   ssize_t rc = 0;
@@ -845,7 +845,7 @@ int ipp_print_file(const struct job *j) {
     if (!ipp_header)
       return -1;
 
-    get_address_port(j->hostname, "631", &host, &port);
+    get_address_port(j->p->remote_host, "631", &host, &port);
 
     sockfd = get_connection(host, port);
 
@@ -932,7 +932,7 @@ void ipp_get_attributes(const char *host, const char *port) {
                          Printer struct? */
   int sockfd;
   int filefd;
-  
+
   ssize_t rc = 0;
 
   size_t tmp_buf_len = 0;
@@ -983,7 +983,7 @@ void ipp_get_attributes(const char *host, const char *port) {
 
     rc = write(sockfd, http_request, http_req_len);
     free(http_request);
-    
+
     printf("Write (HTTP+IPP) RC: %zd\n", rc);
 
     /* Guess a big buffer size, it will increase if needed */
