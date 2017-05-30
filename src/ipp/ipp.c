@@ -190,6 +190,8 @@ static char* ipp_mk_http_request(const char *address, const char *port, const ch
   *pos++ = header->major;
   *pos++ = header->minor;
 
+  /* TODO: This really is wrong according to Kaylin -- Replace before
+     release */
   /* Silence the alignment warning */
   tmp16 = (int16_t *) (void *) pos;
   *tmp16 = (int16_t) htons(header->op_stat);
