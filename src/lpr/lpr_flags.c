@@ -5,12 +5,12 @@
 #include "lpr_flags.h"
 
 struct lpr_flags *
-new_lpr_flags (char *username, char *hostname)
+new_lpr_flags(char *username, char *hostname)
 {
-  struct lpr_flags *j = (struct lpr_flags*) malloc (sizeof (struct lpr_flags));
-  if (!j) {
-    printf ("Failed to malloc in new_lpr_flags");
-    exit (1);
+  struct lpr_flags *j = (struct lpr_flags*)malloc(sizeof(struct lpr_flags));
+  if (j == NULL) {
+    printf("Failed to malloc in new_lpr_flags");
+    exit (EXIT_FAILURE);
   }
 
   j->username = username;
@@ -38,6 +38,7 @@ new_lpr_flags (char *username, char *hostname)
   j->Cflag = NULL;
   j->iflag = -1;
   j->Jflag = NULL;
+  j->Mflag = NULL;
   j->Pflag = NULL;
   j->Tflag = NULL;
   j->Uflag = NULL;
@@ -47,14 +48,9 @@ new_lpr_flags (char *username, char *hostname)
 }
 
 void
-free_lpr_flags (struct lpr_flags *j)
+free_lpr_flags(struct lpr_flags *j)
 {
-  free (j->username);
-  free (j->hostname);
-  free (j->font);
-  free (j->Cflag);
-  free (j->Jflag);
-  free (j->Tflag);
-  free (j->Uflag);
-  free (j);
+  free(j->username);
+  free(j->hostname);
+  free(j);
 }
