@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <magic.h>
 #include <math.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -36,21 +37,25 @@ main(int argc, char **argv)
   int flag_errors = -1;
   int jobid = -1;
   int printer_status = -1;
-  int userid = -1;
+  uid_t userid = 0;
   char *jid = NULL;
   char *printername = NULL;
   double len = 0;
   struct job *print_job = NULL;
   struct lpr_flags *flags = NULL;
   struct printer *printcap = NULL;
+  struct passwd *pwe = NULL;
   char hostname[256] = {0};
 
   setprogname(argv[0]);
   gethostname(hostname, 256);
-  userid = (int) getuid ();
+  userid = getuid();
+  pwe = getpwuid(userid);
 
   /* Handle the command line input */
   flags = parse_commandline(argc, argv);
+  flags->username = pwe->pw_name;
+  flags->hostname = hostname;
   flag_errors = verify_lpr_flags(flags);
   if (flag_errors > 0) {
     printf("verify_lpr_flags found %d errors with cli input... exiting.\n", flag_errors);
@@ -122,6 +127,9 @@ main(int argc, char **argv)
   return EXIT_SUCCESS;
 }
 
+/* Reads the a file which tracks job ids.
+ *It returns the next one and increments the vounter.
+ */
 int
 create_job_id(void) {
   int fd = open("/var/spool/job", O_RDWR|O_EXLOCK);
@@ -142,6 +150,8 @@ create_job_id(void) {
   return jid;
 }
 
+/* Creates a fil in /tmp for data to be printed from stdin.
+ */
 static void
 file_from_stdin(char *template)
 {
@@ -163,6 +173,8 @@ file_from_stdin(char *template)
   }
 }
 
+/* Detect the mime type of a file using libmagic and return it.
+ */
 static char *
 get_mime_type(char *file) {
   size_t mime_len = 0;
@@ -193,6 +205,8 @@ get_mime_type(char *file) {
   return mime;
 }
 
+/* Parse the command line input to the program and return it as a structure.
+ */
 static struct lpr_flags *
 parse_commandline(int argc, char **argv)
 {
@@ -204,7 +218,7 @@ parse_commandline(int argc, char **argv)
   unsigned long i = 0;
   char template[] = "/tmp/lpr.XXXXXXX";
   /* TODO: Edit the constants "user1" and "localhost" */
-  struct lpr_flags *f = new_lpr_flags ("user1", "localhost");
+  struct lpr_flags *f = new_lpr_flags();
 
   while ((ch[0] = (char)getopt(argc, argv, "#:1:2:3:4:C:i:J:M:P:T:U:cdfghlmnopqrRstv")) != -1) {
     switch (ch[0]) {
@@ -337,6 +351,7 @@ print_lpr_flags(struct lpr_flags *f)
 {
   int i = 0;
 
+  printf("Print job requested by: %s on host %s.\n", f->username, f->hostname);
   printf("Printing file(s):\n");
   while (f->file_names[i]) {
     printf("\t%s -- MIME: %s\n", f->file_names[i], f->mime_types[i]);

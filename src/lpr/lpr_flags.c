@@ -5,7 +5,7 @@
 #include "lpr_flags.h"
 
 struct lpr_flags *
-new_lpr_flags(char *username, char *hostname)
+new_lpr_flags(void)
 {
   struct lpr_flags *j = (struct lpr_flags*)malloc(sizeof(struct lpr_flags));
   if (j == NULL) {
@@ -13,8 +13,8 @@ new_lpr_flags(char *username, char *hostname)
     exit (EXIT_FAILURE);
   }
 
-  j->username = username;
-  j->hostname = hostname;
+  j->username = NULL;
+  j->hostname = NULL;
   j->file_names = NULL;
   j->mime_types = NULL;
   j->cflag = false;

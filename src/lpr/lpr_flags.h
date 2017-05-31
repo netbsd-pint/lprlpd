@@ -42,5 +42,5 @@ struct lpr_flags {
 };
 
 /* lpr_flags protos */
-struct lpr_flags * new_lpr_flags(char *username, char *hostname);
+struct lpr_flags * new_lpr_flags(void);
 void free_lpr_flags(struct lpr_flags *j);
