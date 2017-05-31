@@ -18,6 +18,7 @@ struct lpr_flags {
   char **mime_types; /* mime types that correspond to file_names char** */
   char *font;     /* Specifies a font to be mounted on font position i. */
   char *Cflag;    /* A c string: Job classification to use on the burst page. */
+  char *Mflag;    /* Override libmagic mime type detection. */
   char *Pflag;    /* Force output to a specific printer. Normally, the default printer is used or the value of the environment variable PRINTER. */
   int iflag;      /* the output is indented by numcols. */
   int fontnum;    /* Number of font, I don't really understand this */
@@ -41,5 +42,5 @@ struct lpr_flags {
 };
 
 /* lpr_flags protos */
-struct lpr_flags * new_lpr_flags (char *username, char *hostname);
-void free_lpr_flags (struct lpr_flags *j);
+struct lpr_flags * new_lpr_flags(void);
+void free_lpr_flags(struct lpr_flags *j);
