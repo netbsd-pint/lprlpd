@@ -117,7 +117,7 @@ parse_commandline (int argc, char **argv)
   int tmp = optind;
   bool read_stdin = false;
 
-  while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:J:T:U:C:i:P:cdfghlmnopqrRstv")) != -1) {
+  while ((ch[0] = (char) getopt (argc, argv, "#:1:2:3:4:C:i:J:M:P:T:U:cdfghlmnopqrRstv")) != -1) {
     switch (ch[0]) {
     case '#':
       if (atoi (optarg) < 0) {
@@ -133,23 +133,26 @@ parse_commandline (int argc, char **argv)
       f->fontnum = atoi (ch);
       f->font = optarg;
       break;
-    case 'J':
-      f->Jflag = optarg;
-      break;
-    case 'T':
-      f->Tflag = optarg;
-      break;
-    case 'U':
-      f->Uflag = optarg;
-      break;
     case 'C':
       f->Cflag = optarg;
       break;
     case 'i':
       f->iflag = atoi (optarg);
       break;
+    case 'J':
+      f->Jflag = optarg;
+      break;
+    case 'M':
+      f->Mflag = optarg;
+      break;
     case 'P':
       f->Pflag = optarg;
+      break;
+    case 'T':
+      f->Tflag = optarg;
+      break;
+    case 'U':
+      f->Uflag = optarg;
       break;
       /* the rest of these flags are booleans */
     case 'c': f->cflag = true; break;
@@ -225,7 +228,11 @@ parse_commandline (int argc, char **argv)
         f->file_names[i + 2] = NULL;
         f->mime_types[i + 2] = NULL;
         f->file_names[i] = argv[optind];
-        f->mime_types[i] = get_mime_type (argv[optind]);
+        if (f->Mflag) {
+          f->mime_types[i] = f->Mflag;
+        } else {
+          f->mime_types[i] = get_mime_type (argv[optind]);
+        }
       } else {
         printf ("lpr: cannot acces %s: No such file or directory\n", argv[optind]);
       }
