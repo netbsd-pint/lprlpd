@@ -50,12 +50,18 @@
 .Op Ar name ...
 .Sh DESCRIPTION
 .Nm
-uses a spooling daemon to print the named files when facilities
-become available.
-If no names appear, the standard input is assumed.
+communicates with
+.Xr lpd 8
+or directly with a printer via LPR or IPP depending on the settings in
+.Xr printcap 5 .
+If no file names appear, the standard input is assumed.
 .Pp
-The following single letter options are used to notify the line printer
-spooler that the files are not standard text files.
+The following single letter options are used to override the line printer
+spooler's logic to detect the file type. Normally
+.Nm
+will use
+.Xr libmagic 3
+to detect the file type.
 The spooling daemon will
 use the appropriate filters to print the data accordingly.
 .Bl -tag -width indent
@@ -117,20 +123,7 @@ is used.
 Queue the print job but do not start the spooling daemon.
 .It Fl r
 Remove the file upon completion of spooling or upon completion of
-printing (with the
-.Fl s
-option).
-.It Fl s
-Use symbolic links.
-Usually files are copied to the spool directory.
-The
-.Fl s
-option will use
-.Xr symlink 2
-to link data files rather than trying to copy them so large files can be
-printed.
-This means the files should
-not be modified or removed until they have been printed.
+printing.
 .El
 .Pp
 Normally
@@ -221,7 +214,7 @@ If the following environment variable exists, it is used by
 Specifies an alternative default printer.
 .El
 .Sh FILES
-.Bl -tag -width /var/spool/output/*/tf* -compact
+.Bl -tag -width /var/spool/output/* -compact
 .It Pa /etc/passwd
 Personal identification.
 .It Pa /etc/printcap
@@ -230,17 +223,9 @@ Printer capabilities data base.
 Line printer daemons.
 .It Pa /var/spool/output/*
 Directories used for spooling.
-.It Pa /var/spool/output/*/cf*
-Daemon control files.
-.It Pa /var/spool/output/*/df*
-Data files specified in "cf" files.
-.It Pa /var/spool/output/*/tf*
-Temporary copies of "cf" files.
 .El
 .Sh DIAGNOSTICS
-If you try to spool too large a file, it will be truncated.
-.Nm
-will object to printing binary files.
+If you try to spool too large a file and the disk is full, it will be truncated.
 If a user other than root prints a file and spooling is disabled,
 .Nm
 will print a message saying so and will not put jobs in the queue.
@@ -269,7 +254,7 @@ The
 .Nm
 command saw a complete rewrite in NetBSD 7.1 which added IPP support, and
 direct printing to remote printers without running
-.Ic lpd.
+.Xr lpd 8 .
 .Sh BUGS
 Fonts for
 .Xr troff 1
