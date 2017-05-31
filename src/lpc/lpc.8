@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)lpc.8	8.5 (Berkeley) 4/28/95
 .\"
-.Dd April 28, 1995
+.Dd May 30, 2017
 .Dt LPC 8
 .Os
 .Sh NAME
@@ -144,13 +144,11 @@ Undoes the effects of
 .Ic down .
 .El
 .Sh FILES
-.Bl -tag -width /var/spool/output/*/lock -compact
+.Bl -tag -width /var/spool/output/* -compact
 .It Pa /etc/printcap
 printer description file
 .It Pa /var/spool/output/*
 spool directories
-.It Pa /var/spool/output/*/lock
-lock file for queue control
 .El
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
@@ -172,3 +170,9 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+The
+.Nm
+command saw a complete rewrite in NetBSD 7.1.
+.Sh BUGS
+.Nm
+can only interact with the localhost for security reasons.

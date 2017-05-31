@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)lpr.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 17, 2006
+.Dd May 30, 2017
 .Dt LPR 1
 .Os
 .Sh NAME
@@ -97,8 +97,7 @@ The files are assumed to contain data from
 .Xr troff 1
 (cat phototypesetter commands).
 .It Fl v
-The files are assumed to contain a raster image for devices like the
-Benson Varian.
+The files are assumed to contain a raster image.
 .El
 .Pp
 These options apply to the handling of
@@ -264,8 +263,13 @@ regarding missing spool files by
 .Sh HISTORY
 The
 .Nm
-command appeared in
+command first appeared in
 .Bx 3 .
+The
+.Nm
+command saw a complete rewrite in NetBSD 7.1 which added IPP support, and
+direct printing to remote printers without running
+.Ic lpd.
 .Sh BUGS
 Fonts for
 .Xr troff 1
