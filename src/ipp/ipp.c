@@ -187,8 +187,8 @@ static char* ipp_mk_http_request(const char *address, const char *port, const ch
   pos += used_chars;
   http_size -= (unsigned long) used_chars;
 
-  *pos++ = header->major;
-  *pos++ = header->minor;
+  *pos++ = (char)header->major;
+  *pos++ = (char)header->minor;
 
   /* TODO: This really is wrong according to Kaylin -- Replace before
      release */
@@ -311,6 +311,24 @@ static bool ipp_parse_ipp_header_tags(char *header, const size_t header_len, str
        capture) that I don't parse yet -Zach (05/10/2017)*/
 
     switch (*next) {
+      case IPP_TAG_UNSUPPORTED:
+        ++next;
+        len = (size_t) ntohs(*((uint16_t *) (void *) next));
+        next += 2;
+        attr = (char *) malloc(++len);
+        strlcpy(attr, next, len);
+        next += --len;
+        len = (size_t) ntohs(*((uint16_t *) (void *) next));
+        next += 2;
+        printf("(TAG_UNSUPPORTED) %s\n", attr);
+        free(attr);
+
+        if (len != 0) {
+          /* TODO: FIXME? */
+          printf("unknown tag with a non-zero size value?\n");
+          exit(1);
+        }
+        break;
       case IPP_TAG_UNKNOWN:
         ++next;
         len = (size_t) ntohs(*((uint16_t *) (void *) next));
@@ -326,6 +344,24 @@ static bool ipp_parse_ipp_header_tags(char *header, const size_t header_len, str
         if (len != 0) {
           /* TODO: FIXME? */
           printf("unknown tag with a non-zero size value?\n");
+          exit(1);
+        }
+        break;
+      case IPP_TAG_NO_VALUE:
+        ++next;
+        len = (size_t) ntohs(*((uint16_t *) (void *) next));
+        next += 2;
+        attr = (char *) malloc(++len);
+        strlcpy(attr, next, len);
+        next += --len;
+        len = (size_t) ntohs(*((uint16_t *) (void *) next));
+        next += 2;
+        printf("(TAG_NO_VALUE) %s\n", attr);
+        free(attr);
+
+        if (len != 0) {
+          /* TODO: FIXME? */
+          printf("no-value tag with a non-zero size value?\n");
           exit(1);
         }
         break;
@@ -739,7 +775,7 @@ static bool ipp_parse_ipp_header(char *header, const size_t header_len, struct i
   /*   return false; */
   /* } */
 
-  /* printf("IPP Version: 1.1\n"); */
+  printf("IPP Version: %hhi.%hhi\n", *next, *(next+1));
 
   next += 2;
 
@@ -930,8 +966,8 @@ void ipp_get_attributes(const char *host, const char *port) {
   char *http_request = 0;
   char *tmp_buf;
   char *read_buf;
-  char *path = "/ipp"; /* TODO: Path should come from somewhere!
-                         Printer struct? */
+  char *path = "/ipp/port1"; /* TODO: Path should come from somewhere!
+                                Printer struct? */
   int sockfd;
   int filefd;
 
@@ -946,12 +982,14 @@ void ipp_get_attributes(const char *host, const char *port) {
   struct ipp_wire_header *ipp_header = ipp_mk_wire_header(IPP_OP_GET_PRINTER_ATTR, (int32_t) rand());
 
   if (!ipp_header)
-    return ;
+    return;
 
   sockfd = get_connection(host, port);
 
-  if (sockfd == -1)
+  if (sockfd == -1) {
+    ipp_free_wire_header(ipp_header);
     return;
+  }
 
   ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_OPERATION_ATTR, NULL, NULL);
 
@@ -969,14 +1007,16 @@ void ipp_get_attributes(const char *host, const char *port) {
   /* TODO: Insert real username here */
   ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_NAME_WITHOUT_LANG, "requesting-user-name", "mcgrewz");
 
-  //ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_KEYWORD, "requested-attributes", "all");
+  /* ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_KEYWORD, "requested-attributes", "all"); */
+
+  ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_KEYWORD, "document-format-supported", "text/plain");
 
   /* ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_KEYWORD, "document-format-default", "text/plain"); */
 
   ipp_wire_header_add_tag(ipp_header, (char)IPP_TAG_END_ATTR, NULL, NULL);
 
   /* TODO: This path (/ipp) shouldn't be hard coded */
-  http_request = ipp_mk_http_request(host, port, "/ipp", ipp_header, file_len, &http_req_len);
+  http_request = ipp_mk_http_request(host, port, path, ipp_header, file_len, &http_req_len);
 
   printf("HTTP REQ LEN: %zu\n", http_req_len);
 

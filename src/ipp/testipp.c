@@ -14,14 +14,8 @@ int main(int argc, char **argv) {
   /*   return 1; */
   /* } */
 
-  //CF413 Printer
-  //char *host = "140.160.139.120";
-
-  //CF405 Printer
-  //char *host = "140.160.30.68";
-
-  //CF162 Printer
-  char *host = "140.160.30.69";
+  //Home Printer
+  char *host = "DCP7065DN.local";
   
   char *port = "631";
   /* get_address_port("port@host","999", &host, &port); */
