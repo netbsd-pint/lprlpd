@@ -1,3 +1,5 @@
+HAVE_LLVM=YES
+ACTIVE_CC=clang
 COPTS=-O0 -Weverything
 LDFLAGS+=-lmagic -lm
 MKDEBUG=yes

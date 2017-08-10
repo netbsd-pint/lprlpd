@@ -1,4 +1,6 @@
-COPTS=-Weverything
+HAVE_LLVM=YES
+ACTIVE_CC=clang
+COPTS=-Weverything -Wno-padded
 LDFLAGS+=-lpthread
 MKDEBUG=yes
 PROG=lpd

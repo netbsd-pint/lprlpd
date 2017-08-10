@@ -1,3 +1,4 @@
+CC=clang
 .include <bsd.own.mk>
 MKDEBUG=yes
 LIBISPRIVATE= yes

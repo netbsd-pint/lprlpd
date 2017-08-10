@@ -1,4 +1,5 @@
-CC=clang
+HAVE_LLVM=YES
+ACTIVE_CC=clang
 COPTS=-Weverything
 MKDEBUG=YES
 
